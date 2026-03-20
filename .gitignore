@@ -1,3 +1,6 @@
 .superpowers/
 data.db
 __pycache__/
+.venv/
+static/vendor/
+static/css/itou.css
