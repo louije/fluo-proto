@@ -1,1 +1,12 @@
-<div class="c-box mb-3 mb-md-4"><h3>Historique</h3><p>TODO</p></div>
+<h2>Historique des modifications</h2>
+
+<ul class="list-step">
+    {% for event in history %}
+    <li>
+        <time datetime="{{ event.created_at }}">
+            Le {{ event.created_at[:10] }} à {{ event.created_at[11:16] }}
+        </time>
+        <span>{{ event_labels.get(event.event_type, event.event_type) }}</span>
+    </li>
+    {% endfor %}
+</ul>
