@@ -1,0 +1,32 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to server
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 163.172.180.4 >> ~/.ssh/known_hosts
+
+          rsync -avz --delete \
+            --exclude='.venv' \
+            --exclude='__pycache__' \
+            --exclude='.git' \
+            --exclude='data.db' \
+            --exclude='.DS_Store' \
+            --exclude='docs/' \
+            --exclude='.superpowers/' \
+            ./ root@163.172.180.4:/opt/fluo-proto/
+
+          ssh root@163.172.180.4 "cd /opt/fluo-proto && /root/.local/bin/uv sync && systemctl restart fluo-proto"
