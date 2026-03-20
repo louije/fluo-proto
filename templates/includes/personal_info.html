@@ -1,1 +1,55 @@
-<div class="c-box mb-3 mb-md-4"><h3>Informations personnelles</h3><p>TODO</p></div>
+<div class="c-box mb-3 mb-md-4">
+    <div class="row mb-3">
+        <div class="col-12 col-sm">
+            <h3 class="mb-0">Informations personnelles</h3>
+        </div>
+        <div class="col-12 col-sm-auto mt-2 mt-sm-0 d-flex align-items-center">
+            <span class="btn btn-ico btn-outline-primary disabled">
+                <i class="ri-pencil-line fw-medium" aria-hidden="true"></i>
+                <span>Modifier</span>
+            </span>
+        </div>
+    </div>
+    <ul class="list-data mb-3">
+        <li>
+            <small>Prénom</small>
+            <strong>{{ o.person_first_name }}</strong>
+        </li>
+        <li>
+            <small>Nom</small>
+            <strong>{{ o.person_last_name }}</strong>
+        </li>
+        <li>
+            <small>Téléphone</small>
+            {% if o.person_phone %}
+                <strong>{{ o.person_phone }}</strong>
+            {% else %}
+                <i class="text-disabled">Non renseigné</i>
+            {% endif %}
+        </li>
+        <li>
+            <small>Adresse e-mail</small>
+            {% if o.person_email %}
+                <strong>{{ o.person_email }}</strong>
+            {% else %}
+                <i class="text-disabled">Non renseigné</i>
+            {% endif %}
+        </li>
+        <li>
+            <small>Date de naissance</small>
+            {% if o.person_birthdate %}
+                <strong>{{ o.person_birthdate }}</strong>
+            {% else %}
+                <i class="text-disabled">Non renseigné</i>
+            {% endif %}
+        </li>
+        <li>
+            <small>Adresse</small>
+            {% if o.person_address %}
+                <address>{{ o.person_address }}</address>
+            {% else %}
+                <i class="text-disabled">Non renseigné</i>
+            {% endif %}
+        </li>
+    </ul>
+</div>
