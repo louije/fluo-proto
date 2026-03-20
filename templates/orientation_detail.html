@@ -1,12 +1,149 @@
 {% extends "base.html" %}
-{% block title %}Orientation{% endblock %}
+
+{% block title %}Demande d'orientation — {{ o.person_last_name }} {{ o.person_first_name }}{% endblock %}
+
 {% block content %}
 <section class="s-title-02">
     <div class="s-title-02__container container">
         <div class="s-title-02__row row">
             <div class="s-title-02__col col-12">
-                <h1>Placeholder — orientation {{ orientation_id }}</h1>
+
+                {# Back link #}
+                <div class="c-prevstep">
+                    <a href="#" class="btn btn-ico btn-link ps-0">
+                        <i class="ri-arrow-drop-left-line ri-xl fw-medium" aria-hidden="true"></i>
+                        <span>Retour à la liste</span>
+                    </a>
+                </div>
+
+                {# Title + badge #}
+                <div class="c-title">
+                    <div class="c-title__main">
+                        <h1>
+                            Demande d'orientation —
+                            {{ o.person_last_name }} {{ o.person_first_name }}
+                            <span class="badge rounded-pill text-nowrap badge-base {{ status_class }}">
+                                {{ status_label }}
+                            </span>
+                        </h1>
+                    </div>
+                </div>
+
+                {# Action bar #}
+                <div class="c-box c-box--action">
+                    <h2 class="visually-hidden">Actions rapides</h2>
+                    {% if o.status == "nouvelle" %}
+                    <div class="form-row align-items-center gx-3">
+                        <div class="form-group col-12 col-lg-auto">
+                            <form method="post" action="/orientation/{{ o.id }}/accept">
+                                <button type="submit"
+                                        class="btn btn-lg btn-link-white btn-block btn-ico justify-content-center">
+                                    <i class="ri-check-line fw-medium" aria-hidden="true"></i>
+                                    <span>Accepter</span>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="form-group col-12 col-lg-auto">
+                            <form method="post" action="/orientation/{{ o.id }}/refuse">
+                                <button type="submit"
+                                        class="btn btn-lg btn-link-white btn-block btn-ico">
+                                    <i class="ri-close-line fw-medium" aria-hidden="true"></i>
+                                    <span>Refuser</span>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="form-group col-12 col-lg d-lg-flex justify-content-lg-end">
+                            <div class="dropdown">
+                                <button class="btn btn-lg btn-link-white btn-block w-lg-auto dropdown-toggle"
+                                        type="button" data-bs-toggle="dropdown">
+                                    Autres actions
+                                </button>
+                                <div class="dropdown-menu w-100">
+                                    <span class="dropdown-item text-muted">Aucune action disponible</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="d-flex align-items-center gap-3 px-3 py-2">
+                        <span class="badge rounded-pill {{ status_class }} text-white">
+                            {{ status_label }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {# Tabs #}
+                <ul class="s-tabs-01__nav nav nav-tabs mb-0" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link active" id="informations-tab"
+                           data-bs-toggle="tab" href="#informations"
+                           role="tab" aria-controls="informations" aria-selected="true">
+                            Informations générales
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="messages-tab"
+                           data-bs-toggle="tab" href="#messages"
+                           role="tab" aria-controls="messages" aria-selected="false">
+                            Messages{% if messages %} ({{ messages|length }}){% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="historique-tab"
+                           data-bs-toggle="tab" href="#historique"
+                           role="tab" aria-controls="historique" aria-selected="false">
+                            Historique
+                        </a>
+                    </li>
+                </ul>
+
             </div>
+        </div>
+    </div>
+</section>
+
+<section class="s-section">
+    <div class="s-section__container container">
+        <div class="tab-content">
+
+            {# Tab 1: Informations générales #}
+            <div class="tab-pane fade show active" id="informations"
+                 role="tabpanel" aria-labelledby="informations-tab">
+                <div class="s-section__row row">
+                    <div class="s-section__col col-12 col-xxl-8 col-xxxl-9 order-2 order-xxl-1">
+                        <h2 class="mb-3 mb-md-4">Informations générales</h2>
+                        {% include "includes/personal_info.html" %}
+                        {% include "includes/sender_info.html" %}
+                        {% include "includes/modalite.html" %}
+                        {% include "includes/diagnostic.html" %}
+                    </div>
+                    <div class="s-section__col col-12 col-xxl-4 col-xxxl-3 order-1 order-xxl-2">
+                        {% include "includes/messages_sidebar.html" %}
+                    </div>
+                </div>
+            </div>
+
+            {# Tab 2: Messages #}
+            <div class="tab-pane fade" id="messages"
+                 role="tabpanel" aria-labelledby="messages-tab">
+                <div class="s-section__row row">
+                    <div class="col-12 col-xxl-8 col-xxxl-9">
+                        {% include "includes/messages_tab.html" %}
+                    </div>
+                </div>
+            </div>
+
+            {# Tab 3: Historique #}
+            <div class="tab-pane fade" id="historique"
+                 role="tabpanel" aria-labelledby="historique-tab">
+                <div class="s-section__row row">
+                    <div class="s-section__col col-12 col-xxl-8 col-xxxl-9">
+                        {% include "includes/history.html" %}
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </section>
