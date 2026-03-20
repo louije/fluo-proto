@@ -1,1 +1,42 @@
-<div class="c-box mb-3 mb-md-4"><h3>Qui oriente cet usager ?</h3><p>TODO</p></div>
+<div class="c-box mb-3 mb-md-4">
+    <h3>Qui oriente cet usager ?</h3>
+    <ul class="list-data mb-3">
+        <li>
+            <small>Émetteur</small>
+            <strong>{{ o.sender_name }}</strong>
+        </li>
+        <li>
+            <small>Type</small>
+            <strong>{{ o.sender_type|capitalize }}</strong>
+        </li>
+        {% if o.sender_organization %}
+        <li>
+            <small>Organisation</small>
+            <strong>{{ o.sender_organization }}</strong>
+            {% if o.sender_type == "prescripteur" %}
+                <span class="badge badge-xs rounded-pill bg-warning">Prescripteur habilité</span>
+            {% endif %}
+        </li>
+        {% endif %}
+        {% if o.sender_email %}
+        <li>
+            <small>Adresse e-mail</small>
+            <strong>{{ o.sender_email }}</strong>
+        </li>
+        {% endif %}
+        <li>
+            <small>Date</small>
+            <strong>Le {{ o.created_at[:10] }}</strong>
+        </li>
+    </ul>
+    {% if o.sender_message %}
+    <ul class="list-data mb-3">
+        <li class="has-forced-line-break">
+            <small>Message de la demande</small>
+            <blockquote class="blockquote mt-2 mb-0">
+                <p>{{ o.sender_message }}</p>
+            </blockquote>
+        </li>
+    </ul>
+    {% endif %}
+</div>
