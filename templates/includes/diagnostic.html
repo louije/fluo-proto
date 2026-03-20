@@ -1,1 +1,109 @@
-<div class="c-box mb-3 mb-md-4"><h3>Diagnostic</h3><p>TODO</p></div>
+<div class="c-box mb-3 mb-md-4">
+    <h3>Diagnostic</h3>
+    <p class="fs-sm text-muted mb-3">
+        Diagnostic socio-professionnel issu du dossier France Travail
+    </p>
+
+    {% set d = o.diagnostic_data %}
+
+    {# Projet professionnel #}
+    {% if d.projet_professionnel %}
+    {% set pp = d.projet_professionnel %}
+    <div class="mb-3 ps-3" style="border-left: 3px solid #0a6ebd;">
+        <div class="fw-bold fs-sm mb-1">Projet professionnel</div>
+        <div class="fs-sm">
+            {{ pp.nom_metier }} ({{ pp.code_rome }})
+            {% if pp.est_prioritaire %}
+                <span class="badge badge-xs rounded-pill bg-info ms-1">Prioritaire</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# Contraintes personnelles #}
+    {% if d.contraintes %}
+    <div class="mb-3 ps-3" style="border-left: 3px solid #f59e0b;">
+        <div class="fw-bold fs-sm mb-1">Contraintes personnelles</div>
+        {% for c in d.contraintes %}
+        <div class="fs-sm{% if not loop.last %} mb-2{% endif %}">
+            <strong>{{ c.libelle }}</strong>
+            — Impact {{ c.impact|lower }}
+            {% if c.est_prioritaire %}, prioritaire{% endif %}
+            {% if c.situations %}
+            <div class="text-muted ms-3">
+                {% for s in c.situations %}
+                    {% if s.valeur == "OUI" %}• {{ s.libelle }}<br>{% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% if c.objectifs %}
+            <div class="ms-3">
+                {% for obj in c.objectifs %}
+                    <span class="fs-xs">→ {{ obj.libelle }}
+                    {% if obj.valeur == "EN_COURS" %}
+                        <span class="badge badge-xs rounded-pill bg-info-lighter text-info">En cours</span>
+                    {% elif obj.valeur == "REALISE" %}
+                        <span class="badge badge-xs rounded-pill bg-success-lighter text-success">Réalisé</span>
+                    {% endif %}
+                    </span><br>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {# Pouvoir agir #}
+    {% if d.pouvoir_agir %}
+    {% set pa = d.pouvoir_agir %}
+    <div class="mb-3 ps-3" style="border-left: 3px solid #8b5cf6;">
+        <div class="fw-bold fs-sm mb-1">Confiance et capacité à agir</div>
+        <div class="fs-sm">
+            {% if pa.resultat_analyse %}
+                {{ pa.resultat_analyse }}
+            {% else %}
+                Confiance : {{ pa.confiance }} — Accompagnement : {{ pa.accompagnement }}
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# Autonomie numérique #}
+    {% if d.autonomie_numerique %}
+    {% set an = d.autonomie_numerique %}
+    <div class="mb-3 ps-3" style="border-left: 3px solid #06b6d4;">
+        <div class="fw-bold fs-sm mb-1">Maîtrise du numérique</div>
+        <div class="fs-sm">
+            Impact {{ an.impact|lower }}
+            {% if an.situations %}
+            <div class="text-muted ms-3">
+                {% for s in an.situations %}
+                    • {{ s.libelle }} : {{ "Oui" if s.valeur == "OUI" else "Non" }}<br>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% if an.objectifs %}
+            <div class="ms-3">
+                {% for obj in an.objectifs %}
+                    <span class="fs-xs">→ {{ obj.libelle }}
+                    {% if obj.valeur == "EN_COURS" %}
+                        <span class="badge badge-xs rounded-pill bg-info-lighter text-info">En cours</span>
+                    {% endif %}
+                    </span><br>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# Agent + date #}
+    {% if d.agent %}
+    <div class="fs-xs text-muted mt-2">
+        Dernière mise à jour : {{ d.date_mise_a_jour }}
+        par {{ d.agent.prenom }} {{ d.agent.nom }}
+        {% if d.agent.structure %} — {{ d.agent.structure }}{% endif %}
+    </div>
+    {% endif %}
+</div>
