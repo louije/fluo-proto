@@ -1,0 +1,9 @@
+[project]
+name = "fluo-proto"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.135.1",
+    "jinja2>=3.1.6",
+    "uvicorn>=0.42.0",
+]
