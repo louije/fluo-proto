@@ -62,26 +62,47 @@ uv run uvicorn app:app --reload --host 0.0.0.0 --port 8002
 rm -f data.db && uv run python seed.py
 ```
 
-## Deploy to Scaleway (STARDUST1-S)
+## Deploy
 
-Instance: `163.172.180.4` (fluo-proto-stardust)
-URL: http://163.172.180.4:8002/
+**Push to main → auto-deploys** via GitHub Actions (`.github/workflows/deploy.yml`).
+
+The action rsync's the repo to the server, runs `uv sync`, and restarts the systemd service. Static assets (gitignored) are already on the server and preserved across deploys (no `--delete`).
+
+### Server details
+
+- Instance: Scaleway STARDUST1-S (€0.0001/h), `fluo-proto-stardust`
+- IP: `163.172.180.4`
+- URL: http://163.172.180.4:8002/
+- SSH: `ssh root@163.172.180.4`
+- App path: `/opt/fluo-proto`
+- Service: `systemctl {status,restart,stop} fluo-proto`
+- Deploy key: dedicated `fluo-proto-deploy` key registered in Scaleway IAM, private key stored as GitHub secret `SSH_PRIVATE_KEY`
+
+### Manual deploy
 
 ```bash
-# Sync files
 rsync -avz --exclude='.venv' --exclude='__pycache__' --exclude='.git' --exclude='data.db' --exclude='.DS_Store' --exclude='docs/' --exclude='.superpowers/' ./ root@163.172.180.4:/opt/fluo-proto/
+ssh root@163.172.180.4 "cd /opt/fluo-proto && /root/.local/bin/uv sync && systemctl restart fluo-proto"
+```
 
-# Re-seed and restart
+### Re-seed on server
+
+```bash
 ssh root@163.172.180.4 "cd /opt/fluo-proto && rm -f data.db && /root/.local/bin/uv run python seed.py && systemctl restart fluo-proto"
 ```
 
-Full setup on a fresh instance:
+### Fresh instance setup
+
 ```bash
 apt-get update -qq && apt-get install -yqq python3 python3-venv curl
 curl -LsSf https://astral.sh/uv/install.sh | sh
 mkdir -p /opt/fluo-proto
-# rsync files (see above)
+# rsync files (including static/)
 cd /opt/fluo-proto && /root/.local/bin/uv sync && /root/.local/bin/uv run python seed.py
 # create /etc/systemd/system/fluo-proto.service then:
 systemctl daemon-reload && systemctl enable --now fluo-proto
 ```
+
+### Gotcha: static assets not in git
+
+`static/vendor/` and `static/css/itou.css` are gitignored (too large). The deploy action does NOT use `--delete` specifically to preserve these files on the server. If you recreate the instance, you must rsync static assets manually from your local machine or copy from les-emplois (see "Relation to les-emplois" above).
