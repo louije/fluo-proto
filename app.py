@@ -3,13 +3,18 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from db import add_message, get_all_orientations, get_history, get_messages, get_orientation, init_db, update_orientation_status
+from db import add_message, get_all_orientations, get_db, get_history, get_messages, get_orientation, init_db, update_orientation_status
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 init_db()
+
+# Auto-seed if DB is empty (useful for ephemeral containers)
+if get_db().execute("SELECT COUNT(*) FROM orientation").fetchone()[0] == 0:
+    from seed import seed
+    seed()
 
 STATUS_LABELS = {
     "nouvelle": ("Nouvelle demande", "bg-info"),
