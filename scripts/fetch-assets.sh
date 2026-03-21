@@ -4,7 +4,7 @@
 set -euo pipefail
 
 LES_EMPLOIS="${1:?Usage: $0 /path/to/les-emplois}"
-STATIC="$(dirname "$0")/../static"
+STATIC="$(dirname "$0")/../web/static"
 
 # theme-inclusion (CSS, fonts, images, JS)
 rm -rf "$STATIC/vendor/theme-inclusion"

@@ -7,15 +7,16 @@ FastAPI + Jinja2 + PostgreSQL prototype for orientation requests (demandes d'ori
 Clickable prototype — no auth, no real API, just enough to demonstrate the UX.
 
 ```
-app.py              — FastAPI setup, template globals, mount routers
-config.py           — settings, constants, labels
-database.py         — SQLAlchemy engine, session, init_db
-models.py           — SQLModel models (Orientation, Message, HistoryEvent)
-routes/
-  orientations.py   — all orientation routes (list, detail, accept, refuse, message, orienteur)
-seed.py             — 5 mock orientations with diagnostic data
-templates/          — Jinja2: base.html + pages + includes/
-static/             — vendored CSS/JS/fonts from les-emplois (committed to git, ~4MB)
+web/                — Python package (all application code)
+  app.py            — FastAPI setup, template globals, mount routers
+  config.py         — settings, constants, labels
+  database.py       — SQLAlchemy engine, session, init_db
+  models.py         — SQLModel models (Orientation, Message, HistoryEvent)
+  seed.py           — 5 mock orientations with diagnostic data
+  routes/
+    orientations.py — all orientation routes (list, detail, accept, refuse, message, orienteur)
+  templates/        — Jinja2: base.html + pages + includes/
+  static/           — vendored CSS/JS/fonts from les-emplois (committed to git, ~4MB)
 ```
 
 Two user views without auth:
@@ -24,7 +25,7 @@ Two user views without auth:
 
 Status flow: `nouvelle` → `acceptee` / `refusee`
 
-Adding a new feature: create `routes/feature.py` with an `APIRouter`, include it in `app.py`.
+Adding a new feature: create `web/routes/feature.py` with an `APIRouter`, include it in `web/app.py`.
 
 ## Relation to les-emplois
 
@@ -51,14 +52,14 @@ Available in all templates without passing per-route:
 - `event_labels` — dict mapping event_type → label
 - `modalite_labels` — dict mapping modalite → label
 
-Custom filter: `{{ value|format_datetime }}` — formats ISO datetime to "HH:MM à YYYY-MM-DD"
+Custom filter: `{{ value|format_datetime }}` — formats ISO datetime to "YYYY-MM-DD à HH:MM"
 
 ## Local dev
 
 ```bash
 docker compose up -d
-DATABASE_URL=postgresql+psycopg://fluo:fluo@localhost:5432/fluo uv run python seed.py
-DATABASE_URL=postgresql+psycopg://fluo:fluo@localhost:5432/fluo uv run uvicorn app:app --reload --host 0.0.0.0 --port 8002
+DATABASE_URL=postgresql+psycopg://fluo:fluo@localhost:5432/fluo uv run python -m web.seed
+DATABASE_URL=postgresql+psycopg://fluo:fluo@localhost:5432/fluo uv run uvicorn web.app:app --reload --host 0.0.0.0 --port 8002
 ```
 
 ## Deploy

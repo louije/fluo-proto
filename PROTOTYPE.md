@@ -29,12 +29,12 @@ This gives you:
 ### Layer 2: Bootstrap + jQuery (JS dependencies)
 
 ```bash
-mkdir -p static/vendor/bootstrap static/vendor/jquery
-cp /path/to/les-emplois/node_modules/bootstrap/dist/js/bootstrap.min.js static/vendor/bootstrap/
-cp /path/to/les-emplois/node_modules/bootstrap/dist/js/bootstrap.min.js.map static/vendor/bootstrap/
-cp /path/to/les-emplois/node_modules/@popperjs/core/dist/umd/popper.min.js static/vendor/bootstrap/
-cp /path/to/les-emplois/node_modules/@popperjs/core/dist/umd/popper.min.js.map static/vendor/bootstrap/
-cp /path/to/les-emplois/itou/static/vendor/jquery/jquery.min.js static/vendor/jquery/
+mkdir -p web/static/vendor/bootstrap web/static/vendor/jquery
+cp /path/to/les-emplois/node_modules/bootstrap/dist/js/bootstrap.min.js web/static/vendor/bootstrap/
+cp /path/to/les-emplois/node_modules/bootstrap/dist/js/bootstrap.min.js.map web/static/vendor/bootstrap/
+cp /path/to/les-emplois/node_modules/@popperjs/core/dist/umd/popper.min.js web/static/vendor/bootstrap/
+cp /path/to/les-emplois/node_modules/@popperjs/core/dist/umd/popper.min.js.map web/static/vendor/bootstrap/
+cp /path/to/les-emplois/itou/static/vendor/jquery/jquery.min.js web/static/vendor/jquery/
 ```
 
 ### Layer 3: itou.css (les-emplois custom styles)
@@ -42,8 +42,8 @@ cp /path/to/les-emplois/itou/static/vendor/jquery/jquery.min.js static/vendor/jq
 On top of theme-inclusion, les-emplois has its own CSS for components like `list-data`, `list-note`, `list-step`, `c-box`, `c-prevstep`, etc. Without this file, many layout patterns won't render correctly.
 
 ```bash
-mkdir -p static/css
-cp /path/to/les-emplois/itou/static/css/itou.css static/css/
+mkdir -p web/static/css
+cp /path/to/les-emplois/itou/static/css/itou.css web/static/css/
 ```
 
 ### Assets are committed to git
@@ -701,7 +701,7 @@ These variables are available in every template without being passed by routes:
 | `event_labels` | `dict` | Maps event type → human label |
 | `modalite_labels` | `dict` | Maps modalite key → human label |
 
-Globals are set in `app.py` via `templates.env.globals.update(...)`.
+Globals are set in `web/app.py` via `templates.env.globals.update(...)`.
 
 ### Custom Jinja2 filters
 
@@ -709,11 +709,11 @@ Globals are set in `app.py` via `templates.env.globals.update(...)`.
 |--------|-------|--------|
 | `format_datetime` | `{{ msg.created_at\|format_datetime }}` | `2025-03-12 à 14:30` |
 
-Registered in `app.py` via `templates.env.filters["format_datetime"]`.
+Registered in `web/app.py` via `templates.env.filters["format_datetime"]`.
 
 ### Include partials and their expected variables
 
-Each partial in `templates/includes/` expects specific template variables to be set by the route:
+Each partial in `web/templates/includes/` expects specific template variables to be set by the route:
 
 | Partial | Required variables |
 |---------|-------------------|
@@ -750,30 +750,36 @@ uv add fastapi uvicorn jinja2 python-multipart sqlmodel "psycopg[binary]"
 ### File structure
 
 ```
-app.py          — FastAPI setup, mount routers, template globals, custom filters
-config.py       — Settings (DATABASE_URL), constants (labels, statuses)
-database.py     — SQLModel engine, init_db(), get_session()
-models.py       — SQLModel models (Orientation, Message, HistoryEvent)
-routes/
-  __init__.py   — Re-exports routers
-  orientations.py — All orientation routes
-seed.py         — Seed script for fictitious data
+web/                — Python package (all application code)
+  app.py            — FastAPI setup, mount routers, template globals, custom filters
+  config.py         — Settings (DATABASE_URL), constants (labels, statuses)
+  database.py       — SQLModel engine, init_db(), get_session()
+  models.py         — SQLModel models (Orientation, Message, HistoryEvent)
+  seed.py           — Seed script for fictitious data
+  routes/
+    __init__.py     — Re-exports routers
+    orientations.py — All orientation routes
+  templates/        — Jinja2: base.html + pages + includes/
+  static/           — Vendored CSS/JS/fonts from les-emplois (~4MB)
 ```
 
-### app.py — thin wiring
+### web/app.py — thin wiring
 
 ```python
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from config import EVENT_LABELS, MODALITE_LABELS, SERVICE_NAME, STATUS_LABELS
-from database import init_db
-from routes import orientations_router
+from .config import EVENT_LABELS, MODALITE_LABELS, SERVICE_NAME, STATUS_LABELS
+from .database import init_db
+from .routes import orientations_router
+
+_dir = Path(__file__).parent
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=_dir / "static"), name="static")
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=_dir / "templates")
 templates.env.globals.update({
     "service_name": SERVICE_NAME,
     "status_labels": STATUS_LABELS,
@@ -787,7 +793,7 @@ init_db()
 app.include_router(orientations_router)
 ```
 
-### models.py — SQLModel models
+### web/models.py — SQLModel models
 
 ```python
 from sqlmodel import Field, SQLModel
@@ -820,14 +826,14 @@ JSON fields (like `diagnostic_data`) are stored as TEXT and parsed in routes wit
 
 ### Route pattern
 
-Each route file uses `APIRouter`. GET routes render templates, POST routes mutate then redirect (POST-redirect-GET):
+Each route file uses `APIRouter` with relative imports within the `web` package. GET routes render templates, POST routes mutate then redirect (POST-redirect-GET):
 
 ```python
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlmodel import Session, select
-from database import engine
-from models import Orientation
+from ..database import engine
+from ..models import Orientation
 
 router = APIRouter()
 
@@ -863,11 +869,11 @@ Without `Query(default=...)`, multiple `?status=a&status=b` params won't parse c
 
 ```bash
 docker compose up -d                     # start local PostgreSQL
-DATABASE_URL=postgresql+psycopg://fluo:fluo@localhost:5432/fluo uv run python seed.py
-DATABASE_URL=postgresql+psycopg://fluo:fluo@localhost:5432/fluo uv run uvicorn app:app --reload --port 8002
+DATABASE_URL=postgresql+psycopg://fluo:fluo@localhost:5432/fluo uv run python -m web.seed
+DATABASE_URL=postgresql+psycopg://fluo:fluo@localhost:5432/fluo uv run uvicorn web.app:app --reload --port 8002
 ```
 
-The `DATABASE_URL` uses the `postgresql+psycopg://` prefix (required by SQLAlchemy/SQLModel with the psycopg3 driver).
+The `DATABASE_URL` uses the `postgresql+psycopg://` prefix (required by SQLAlchemy/SQLModel with the psycopg3 driver). The app is run as `web.app:app` (the `app` object inside the `web.app` module).
 
 ## Step 10: Finding reference markup in les-emplois
 
@@ -900,7 +906,7 @@ RUN uv sync --frozen --no-cache --no-install-project
 COPY . .
 RUN uv sync --frozen --no-cache
 EXPOSE 8080
-CMD [".venv/bin/uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD [".venv/bin/uvicorn", "web.app:app", "--host", "0.0.0.0", "--port", "8080"]
 ```
 
 ### GitHub Actions workflow
@@ -913,7 +919,7 @@ The `DATABASE_URL` is set as an environment variable on the Scaleway container, 
 
 ### Add a new list page
 
-1. Create a route in `routes/` with `APIRouter`:
+1. Create a route in `web/routes/` with `APIRouter`:
    ```python
    @router.get("/items", response_class=HTMLResponse)
    async def item_list(request: Request, status: list[str] = Query(default=["active"])):
@@ -923,29 +929,29 @@ The `DATABASE_URL` is set as an environment variable on the Scaleway container, 
            "request": request, "items": items, "active_filters": status, ...
        })
    ```
-2. Create `templates/item_list.html` extending `base.html`
+2. Create `web/templates/item_list.html` extending `base.html`
 3. Use the pattern: `s-title-02` (title) → `s-section` (filter bar + table)
-4. Register the router in `app.py` with `app.include_router(router)`
-5. Add a nav item in `base.html`'s offcanvas sidebar
+4. Register the router in `web/app.py` with `app.include_router(router)`
+5. Add a nav item in `web/templates/base.html`'s offcanvas sidebar
 
 ### Add a new detail page with tabs
 
 1. Create the route returning the object + related data
-2. Create `templates/item_detail.html` extending `base.html`
+2. Create `web/templates/item_detail.html` extending `base.html`
 3. Structure: `s-title-02` (prevstep + title + action bar + tab nav) → `s-section` (tab content)
-4. Create `templates/includes/` partials for each tab's content
+4. Create `web/templates/includes/` partials for each tab's content
 5. First tab gets `show active`, use `order-*` classes for main/sidebar column layout
 
 ### Add a new tab to an existing detail page
 
 1. Add a `<li class="nav-item">` to the tab nav in the detail template
 2. Add a `<div class="tab-pane fade">` to the tab content
-3. Create `templates/includes/new_section.html`
+3. Create `web/templates/includes/new_section.html`
 4. Pass any new data from the route
 
 ### Add a new info card
 
-Create a partial in `templates/includes/`:
+Create a partial in `web/templates/includes/`:
 
 ```html
 <div class="c-box mb-3 mb-md-4">
@@ -959,18 +965,18 @@ Create a partial in `templates/includes/`:
 </div>
 ```
 
-Include it in the appropriate tab pane with `{% include "includes/your_card.html" %}`.
+Include it in the appropriate tab pane with `{% include "includes/your_card.html" %}` (template paths are relative to `web/templates/`).
 
 ### Add a new SQLModel model
 
-1. Define the model in `models.py` with `table=True`
+1. Define the model in `web/models.py` with `table=True`
 2. Tables are auto-created by `init_db()` (calls `SQLModel.metadata.create_all(engine)`)
-3. Add seed data in `seed.py` if needed
+3. Add seed data in `web/seed.py` if needed
 4. Query with `Session(engine)` + `select()` in routes
 
 ### Add a new status or event type
 
-1. Add the status key to `ALL_STATUSES` in `config.py`
+1. Add the status key to `ALL_STATUSES` in `web/config.py`
 2. Add label + CSS class to `STATUS_LABELS` (for statuses) or `EVENT_LABELS` (for events)
 3. Templates pick up the new values automatically via globals
 
@@ -985,4 +991,4 @@ Include it in the appropriate tab pane with `{% include "includes/your_card.html
 7. **Logo choice** — use `logo-plateforme-inclusion.svg` for a generic Plateforme de l'inclusion prototype, not `logo-emploi-inclusion.svg` (which is les-emplois specific)
 8. **DATABASE_URL prefix** — SQLAlchemy/SQLModel with psycopg3 requires `postgresql+psycopg://`, not `postgresql://`
 9. **JSON fields** — store as TEXT in PostgreSQL, parse with `json.loads()` in routes before passing to templates. Don't try to access nested JSON properties directly on SQLModel objects in templates.
-10. **Template globals vs route context** — shared labels/config go in `templates.env.globals` (set once in app.py). Page-specific data (the orientation, messages, etc.) goes in the route's template context.
+10. **Template globals vs route context** — shared labels/config go in `templates.env.globals` (set once in `web/app.py`). Page-specific data (the orientation, messages, etc.) goes in the route's template context.

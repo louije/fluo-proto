@@ -5,9 +5,9 @@ from fastapi import APIRouter, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlmodel import Session, select
 
-from config import ALL_STATUSES, MODALITE_LABELS, SERVICE_NAME, STATUS_LABELS
-from database import engine
-from models import HistoryEvent, Message, Orientation
+from ..config import ALL_STATUSES, MODALITE_LABELS, SERVICE_NAME, STATUS_LABELS
+from ..database import engine
+from ..models import HistoryEvent, Message, Orientation
 
 router = APIRouter()
 

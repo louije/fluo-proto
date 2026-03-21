@@ -3,8 +3,8 @@ from datetime import datetime
 
 from sqlmodel import Session, select
 
-from database import engine, init_db
-from models import HistoryEvent, Message, Orientation
+from .database import engine, init_db
+from .models import HistoryEvent, Message, Orientation
 
 DIAGNOSTIC_DATA_1 = {
     "projet_professionnel": {
