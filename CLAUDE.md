@@ -4,13 +4,19 @@ FastAPI + Jinja2 + PostgreSQL prototype for orientation requests (demandes d'ori
 
 ## Architecture
 
-This is a clickable prototype — no auth, no real API, just enough to demonstrate the UX of receiving and processing orientation requests.
+Clickable prototype — no auth, no real API, just enough to demonstrate the UX.
 
-- **app.py** — all routes (list, detail, accept/refuse, messages, orienteur reply)
-- **db.py** — PostgreSQL queries via psycopg, connects via `DATABASE_URL` env var
-- **seed.py** — 5 mock orientations with diagnostic data, history events, messages
-- **templates/** — Jinja2 templates, `base.html` + page templates + `includes/` partials
-- **static/** — vendored CSS/JS/fonts (not in git, see below)
+```
+app.py              — FastAPI setup, template globals, mount routers
+config.py           — settings, constants, labels
+database.py         — SQLAlchemy engine, session, init_db
+models.py           — SQLModel models (Orientation, Message, HistoryEvent)
+routes/
+  orientations.py   — all orientation routes (list, detail, accept, refuse, message, orienteur)
+seed.py             — 5 mock orientations with diagnostic data
+templates/          — Jinja2: base.html + pages + includes/
+static/             — vendored CSS/JS/fonts from les-emplois (committed to git, ~4MB)
+```
 
 Two user views without auth:
 - `/` and `/orientation/{id}` — the receiving service (PLIE Lille Avenir) processes incoming orientations
@@ -18,57 +24,46 @@ Two user views without auth:
 
 Status flow: `nouvelle` → `acceptee` / `refusee`
 
+Adding a new feature: create `routes/feature.py` with an `APIRouter`, include it in `app.py`.
+
 ## Relation to les-emplois
 
-This prototype reproduces the look and UX of [les-emplois](https://github.com/gip-inclusion/les-emplois) (the "Candidatures reçues" / candidature detail pages), repurposed for orientation requests.
+Reproduces the look of [les-emplois](https://github.com/gip-inclusion/les-emplois) via `theme-inclusion`. Static assets are committed to git (trimmed from 16MB to ~4MB). To refresh from les-emplois:
 
-The design system comes from les-emplois via `theme-inclusion`. Static assets are copied from les-emplois into `static/vendor/`:
-- `theme-inclusion/` — CSS (`app.css`), fonts (Marianne, Remix Icons), images, JS
-- `bootstrap/` — Bootstrap 5 JS + Popper
-- `jquery/` — jQuery (required by some theme-inclusion components)
-
-`static/css/itou.css` is a copy of les-emplois custom styles needed on top of theme-inclusion.
-
-All of `static/vendor/` and `static/css/itou.css` are gitignored. To restore them, copy from les-emplois:
 ```bash
-cp -r /path/to/les-emplois/itou/static/vendor/theme-inclusion static/vendor/
-cp -r /path/to/les-emplois/node_modules/bootstrap/dist/js/{bootstrap.min.js,bootstrap.min.js.map} static/vendor/bootstrap/
-cp -r /path/to/les-emplois/node_modules/@popperjs/core/dist/umd/{popper.min.js,popper.min.js.map} static/vendor/bootstrap/
-cp /path/to/les-emplois/itou/static/vendor/jquery/jquery.min.js static/vendor/jquery/
-cp /path/to/les-emplois/itou/static/css/itou.css static/css/
+./scripts/fetch-assets.sh /path/to/les-emplois
 ```
 
 ## Design system gotchas
 
-- **CSS class prefixes**: sections use `s-` (`s-section`, `s-title-02`, `s-header-authenticated`), components use `c-` (`c-box`, `c-title`, `c-prevstep`). Always wrap content in the expected `__container` / `__row` / `__col` nesting or spacing breaks.
-- **c-box variants**: `c-box--action` (dark action bar), `c-box--note` (light note card). Plain `c-box` is a white card with shadow.
-- **list-data / list-note / list-step**: specific `<ul>` patterns from les-emplois for key-value info, notes, and timeline steps. They expect exact markup structure — check les-emplois source if something looks off.
-- **Remix Icons**: loaded via `app.css` (compiled in), not a separate CSS file. Use `ri-*` classes. `fw-medium` after the icon class for consistent weight.
-- **Badge sizes**: `badge-sm` for small (in tables), `badge-base` for normal (in titles). Both need `rounded-pill text-nowrap`.
-- **Bootstrap tabs**: use standard BS5 tab markup (`nav-tabs`, `data-bs-toggle="tab"`, `tab-pane`). The theme overrides styling but the JS API is standard.
-- **Offcanvas sidebar**: the left nav uses Bootstrap's offcanvas. The `l-authenticated` body class triggers the layout that shows it permanently on large screens.
-- **btn-dropdown-filter**: the filter bar dropdown pattern. Needs `btn-dropdown-filter-group` wrapper, `dropdown` inside a `<form>`, checkboxes with `onchange="this.form.submit()"`.
-- **Diagnostic section**: renders JSON from France Travail's Diagnostic Argumenté v4 API. Each category (projet pro, contraintes, pouvoir d'agir, autonomie numérique) is a `c-box` with a colored `border-start border-4`.
+- **CSS class prefixes**: `s-` sections, `c-` components. Always use `__container` / `__row` / `__col` BEM nesting.
+- **c-box variants**: `c-box--action` (dark), `c-box--note` (light). Plain `c-box` = white card.
+- **list-data / list-note / list-step**: expect exact markup structure from les-emplois.
+- **Remix Icons**: `ri-*` classes, loaded via app.css. Use `fw-medium` after icon class.
+- **Badges**: `badge-sm` (tables), `badge-base` (titles). Both need `rounded-pill text-nowrap`.
+- **Body class**: `l-authenticated` triggers permanent sidebar on xl+ screens.
 
-## Dev server
+## Template globals
+
+Available in all templates without passing per-route:
+- `service_name` — "PLIE Lille Avenir"
+- `status_labels` — dict mapping status → (label, css_class)
+- `event_labels` — dict mapping event_type → label
+- `modalite_labels` — dict mapping modalite → label
+
+Custom filter: `{{ value|format_datetime }}` — formats ISO datetime to "HH:MM à YYYY-MM-DD"
+
+## Local dev
 
 ```bash
-DATABASE_URL="postgresql://fluo:Fl4o-pR0t0-2026x@REDACTED_DB_ENDPOINT/fluo" uv run uvicorn app:app --reload --host 0.0.0.0 --port 8002
+docker compose up -d
+DATABASE_URL=postgresql+psycopg://fluo:fluo@localhost:5432/fluo uv run python seed.py
+DATABASE_URL=postgresql+psycopg://fluo:fluo@localhost:5432/fluo uv run uvicorn app:app --reload --host 0.0.0.0 --port 8002
 ```
-
-## Seed / reset database
-
-```bash
-DATABASE_URL="postgresql://fluo:Fl4o-pR0t0-2026x@REDACTED_DB_ENDPOINT/fluo" uv run python seed.py
-```
-
-To reset, drop and recreate tables manually or drop/recreate the database via `scw rdb`.
 
 ## Deploy
 
-**Push to main → auto-deploys** via GitHub Actions (`.github/workflows/deploy.yml`).
-
-The action builds a Docker image (linux/amd64), pushes to the Scaleway container registry, and redeploys the serverless container.
+**Push to main → auto-deploys** via GitHub Actions. Builds Docker image → pushes to registry → redeploys container.
 
 ### Infrastructure
 
@@ -83,6 +78,7 @@ The action builds a Docker image (linux/amd64), pushes to the Scaleway container
   - Namespace: `nova` (`REDACTED_NAMESPACE_ID`)
 - **Registry**: `REDACTED_REGISTRY`
 - **GitHub Secrets**: `SCW_ACCESS_KEY`, `SCW_SECRET_KEY`, `SCW_CONTAINER_ID`, `DATABASE_URL`
+- **DATABASE_URL format**: `postgresql+psycopg://user:pass@host:port/db` (SQLAlchemy dialect)
 
 ### Manual deploy
 
@@ -98,7 +94,3 @@ scw rdb database create instance-id=REDACTED_DB_INSTANCE_ID name=<proto_name>
 scw rdb user create instance-id=REDACTED_DB_INSTANCE_ID name=<proto_name> password=<password>
 scw rdb privilege set instance-id=REDACTED_DB_INSTANCE_ID database-name=<proto_name> user-name=<proto_name> permission=all
 ```
-
-### Gotcha: static assets not in git
-
-`static/vendor/` and `static/css/itou.css` are gitignored (too large). They are baked into the Docker image at build time. If they're missing locally, copy from les-emplois (see "Relation to les-emplois" above).
