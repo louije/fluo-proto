@@ -13,7 +13,8 @@ jobs:
 
       - name: Install Scaleway CLI
         run: |
-          curl -fsSL https://github.com/scaleway/scaleway-cli/releases/latest/download/scaleway-cli_linux_amd64 -o /usr/local/bin/scw
+          SCW_URL=$(curl -fsSL https://api.github.com/repos/scaleway/scaleway-cli/releases/latest | grep -o 'https://[^"]*linux_amd64' | head -1)
+          curl -fsSL "$SCW_URL" -o /usr/local/bin/scw
           chmod +x /usr/local/bin/scw
 
       - name: Login to Scaleway registry
