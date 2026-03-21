@@ -57,7 +57,27 @@ static/css/itou.css
 
 When deploying to a fresh server, rsync them manually from your dev machine.
 
-## Step 2: Base template
+## Step 2: Prototype banner
+
+Every prototype **must** display a prominent red banner stating it uses fictitious data. This is a non-negotiable part of the methodology — it prevents any confusion with the real application.
+
+les-emplois uses this pattern on its demo/staging environments (`DEMO - Données fictives`). We reproduce it with the text "PROTOTYPE" instead.
+
+Add this between `</header>` and `<main>` in your base template:
+
+```html
+<div class="global-messages-container">
+    <div class="alert alert-danger" role="status">
+        <strong>PROTOTYPE – Données fictives</strong>
+    </div>
+</div>
+```
+
+This renders a full-width red bar at the top of every page. It uses Bootstrap's `alert alert-danger` classes (styled by theme-inclusion) and the `global-messages-container` wrapper from les-emplois.
+
+Do not make it dismissible — it should always be visible.
+
+## Step 3: Base template
 
 The base template establishes the authenticated layout. Key elements:
 
@@ -115,7 +135,7 @@ The left navigation uses Bootstrap's offcanvas component. On large screens (`xl+
 </div>
 ```
 
-## Step 3: The page section pattern
+## Step 4: The page section pattern
 
 Every page in les-emplois follows this nesting:
 
@@ -143,7 +163,7 @@ Every page in les-emplois follows this nesting:
 
 **Always** use the `__container` / `__row` / `__col` BEM suffixes. The theme applies margins, padding, and max-widths on these. If you skip them, spacing breaks.
 
-## Step 4: Component patterns
+## Step 5: Component patterns
 
 ### c-box (card)
 
@@ -265,7 +285,7 @@ Always add `fw-medium` after the Remix Icon class for consistent weight. Always 
 
 `data-bs-auto-close="outside"` keeps the dropdown open when clicking checkboxes. `onchange="this.form.submit()"` submits immediately on toggle.
 
-## Step 5: Tab system for modular detail pages
+## Step 6: Tab system for modular detail pages
 
 The detail page uses Bootstrap 5 tabs to split content into sections. This is the core modularity pattern — each tab is an independent `includes/` partial.
 
@@ -323,7 +343,7 @@ The detail page uses Bootstrap 5 tabs to split content into sections. This is th
 
 Tabs are fully modular — you can add, remove, or reorder them without touching other code.
 
-## Step 6: The list page pattern
+## Step 7: The list page pattern
 
 For index/list pages, les-emplois uses a table inside `s-section`:
 
@@ -358,7 +378,7 @@ Empty state:
 </div>
 ```
 
-## Step 7: Backend (FastAPI + SQLite)
+## Step 8: Backend (FastAPI + SQLite)
 
 ### Minimal stack
 
@@ -401,7 +421,7 @@ async def list_view(request: Request, status: list[str] = Query(default=["nouvel
 
 Without `Query(default=...)`, multiple `?status=a&status=b` params won't parse correctly.
 
-## Step 8: Finding reference markup in les-emplois
+## Step 9: Finding reference markup in les-emplois
 
 When you need to reproduce a specific pattern:
 
@@ -417,7 +437,7 @@ Key les-emplois template locations:
 - Layout: `itou/templates/layout/`
 - Components: check for `{% include %}` paths
 
-## Step 9: GitHub repo + push-to-deploy on Scaleway
+## Step 10: GitHub repo + push-to-deploy on Scaleway
 
 ### Create a private repo
 
