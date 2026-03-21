@@ -14,12 +14,14 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory=_dir / "static"), name="static")
 
 templates = Jinja2Templates(directory=_dir / "templates")
-templates.env.globals.update({
-    "service_name": SERVICE_NAME,
-    "status_labels": STATUS_LABELS,
-    "event_labels": EVENT_LABELS,
-    "modalite_labels": MODALITE_LABELS,
-})
+templates.env.globals.update(
+    {
+        "service_name": SERVICE_NAME,
+        "status_labels": STATUS_LABELS,
+        "event_labels": EVENT_LABELS,
+        "modalite_labels": MODALITE_LABELS,
+    }
+)
 templates.env.filters["format_datetime"] = lambda v: v[:16].replace("T", " à ") if v else ""
 app.state.templates = templates
 

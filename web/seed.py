@@ -315,12 +315,18 @@ def seed():
         now = datetime(2026, 3, 12, 10, 30).isoformat()
 
         o1 = Orientation(
-            status="nouvelle", created_at=now,
-            person_first_name="Sophie", person_last_name="MARTIN",
-            person_phone="06 12 34 56 78", person_email="sophie.martin@email.fr",
-            person_birthdate="1990-06-15", person_address="Lomme, 59160",
-            sender_name="Jean-Marc LEFÈVRE", sender_type="prescripteur",
-            sender_organization="FT Agence Lille", sender_email="jean-marc.lefevre@francetravail.fr",
+            status="nouvelle",
+            created_at=now,
+            person_first_name="Sophie",
+            person_last_name="MARTIN",
+            person_phone="06 12 34 56 78",
+            person_email="sophie.martin@email.fr",
+            person_birthdate="1990-06-15",
+            person_address="Lomme, 59160",
+            sender_name="Jean-Marc LEFÈVRE",
+            sender_type="prescripteur",
+            sender_organization="FT Agence Lille",
+            sender_email="jean-marc.lefevre@francetravail.fr",
             sender_message="Mme Martin souhaite se reconvertir comme assistante de vie. "
             "Elle a besoin d'un accompagnement pour lever ses freins de mobilité et de garde d'enfant.",
             modalite="accompagnement_emploi",
@@ -332,12 +338,18 @@ def seed():
 
         date2 = datetime(2026, 3, 5, 14, 15).isoformat()
         o2 = Orientation(
-            status="acceptee", created_at=date2,
-            person_first_name="Karim", person_last_name="BENALI",
-            person_phone="06 98 76 54 32", person_email="karim.benali@email.fr",
-            person_birthdate="1985-11-22", person_address="Lille, 59000",
-            sender_name="Nathalie DUPONT", sender_type="prescripteur",
-            sender_organization="Mission Locale Lille", sender_email="n.dupont@ml-lille.fr",
+            status="acceptee",
+            created_at=date2,
+            person_first_name="Karim",
+            person_last_name="BENALI",
+            person_phone="06 98 76 54 32",
+            person_email="karim.benali@email.fr",
+            person_birthdate="1985-11-22",
+            person_address="Lille, 59000",
+            sender_name="Nathalie DUPONT",
+            sender_type="prescripteur",
+            sender_organization="Mission Locale Lille",
+            sender_email="n.dupont@ml-lille.fr",
             sender_message="M. Benali est en recherche active d'emploi dans le secteur de la logistique. "
             "Il a besoin d'un accompagnement renforcé.",
             modalite="accompagnement_emploi",
@@ -346,16 +358,24 @@ def seed():
         session.add(o2)
         session.flush()
         session.add(HistoryEvent(orientation_id=o2.id, event_type="created", created_at=date2))
-        session.add(HistoryEvent(orientation_id=o2.id, event_type="accepted", created_at=datetime(2026, 3, 7, 9, 0).isoformat()))
+        session.add(
+            HistoryEvent(orientation_id=o2.id, event_type="accepted", created_at=datetime(2026, 3, 7, 9, 0).isoformat())
+        )
 
         date3 = datetime(2026, 3, 8, 11, 0).isoformat()
         o3 = Orientation(
-            status="refusee", created_at=date3,
-            person_first_name="Amina", person_last_name="DIALLO",
-            person_phone="06 55 44 33 22", person_email="amina.diallo@email.fr",
-            person_birthdate="1992-04-10", person_address="Roubaix, 59100",
-            sender_name="Pierre MOREAU", sender_type="orienteur",
-            sender_organization="CCAS Roubaix", sender_email="p.moreau@ccas-roubaix.fr",
+            status="refusee",
+            created_at=date3,
+            person_first_name="Amina",
+            person_last_name="DIALLO",
+            person_phone="06 55 44 33 22",
+            person_email="amina.diallo@email.fr",
+            person_birthdate="1992-04-10",
+            person_address="Roubaix, 59100",
+            sender_name="Pierre MOREAU",
+            sender_type="orienteur",
+            sender_organization="CCAS Roubaix",
+            sender_email="p.moreau@ccas-roubaix.fr",
             sender_message="Mme Diallo souhaite une formation en comptabilité. "
             "Orientation vers un accompagnement adapté.",
             modalite="accompagnement_emploi",
@@ -364,16 +384,26 @@ def seed():
         session.add(o3)
         session.flush()
         session.add(HistoryEvent(orientation_id=o3.id, event_type="created", created_at=date3))
-        session.add(HistoryEvent(orientation_id=o3.id, event_type="refused", created_at=datetime(2026, 3, 10, 16, 30).isoformat()))
+        session.add(
+            HistoryEvent(
+                orientation_id=o3.id, event_type="refused", created_at=datetime(2026, 3, 10, 16, 30).isoformat()
+            )
+        )
 
         date4 = datetime(2026, 3, 14, 9, 45).isoformat()
         o4 = Orientation(
-            status="nouvelle", created_at=date4,
-            person_first_name="Lucas", person_last_name="PETIT",
-            person_phone="07 11 22 33 44", person_email="lucas.petit@email.fr",
-            person_birthdate="1998-08-03", person_address="Villeneuve-d'Ascq, 59491",
-            sender_name="Nathalie DUPONT", sender_type="prescripteur",
-            sender_organization="Mission Locale Lille", sender_email="n.dupont@ml-lille.fr",
+            status="nouvelle",
+            created_at=date4,
+            person_first_name="Lucas",
+            person_last_name="PETIT",
+            person_phone="07 11 22 33 44",
+            person_email="lucas.petit@email.fr",
+            person_birthdate="1998-08-03",
+            person_address="Villeneuve-d'Ascq, 59491",
+            sender_name="Nathalie DUPONT",
+            sender_type="prescripteur",
+            sender_organization="Mission Locale Lille",
+            sender_email="n.dupont@ml-lille.fr",
             sender_message="M. Petit sort d'un contrat en intérim et souhaite se stabiliser. "
             "Besoin d'un accompagnement vers un emploi durable.",
             modalite="accompagnement_emploi",
@@ -385,12 +415,18 @@ def seed():
 
         date5 = datetime(2026, 3, 18, 8, 30).isoformat()
         o5 = Orientation(
-            status="nouvelle", created_at=date5,
-            person_first_name="Fatou", person_last_name="NDIAYE",
-            person_phone="06 77 88 99 00", person_email="fatou.ndiaye@email.fr",
-            person_birthdate="1988-01-25", person_address="Tourcoing, 59200",
-            sender_name="Jean-Marc LEFÈVRE", sender_type="prescripteur",
-            sender_organization="FT Agence Lille", sender_email="jean-marc.lefevre@francetravail.fr",
+            status="nouvelle",
+            created_at=date5,
+            person_first_name="Fatou",
+            person_last_name="NDIAYE",
+            person_phone="06 77 88 99 00",
+            person_email="fatou.ndiaye@email.fr",
+            person_birthdate="1988-01-25",
+            person_address="Tourcoing, 59200",
+            sender_name="Jean-Marc LEFÈVRE",
+            sender_type="prescripteur",
+            sender_organization="FT Agence Lille",
+            sender_email="jean-marc.lefevre@francetravail.fr",
             sender_message="Mme Ndiaye est en reconversion professionnelle après un congé parental. "
             "Elle cherche un accompagnement dans le secteur de l'aide à la personne.",
             modalite="accompagnement_emploi",
@@ -400,11 +436,14 @@ def seed():
         session.flush()
         session.add(HistoryEvent(orientation_id=o5.id, event_type="created", created_at=date5))
 
-        session.add(Message(
-            orientation_id=o2.id, author_name="PLIE Lille Avenir",
-            content="Merci pour cette orientation, nous prenons en charge le dossier.",
-            created_at=datetime(2026, 3, 6, 10, 0).isoformat(),
-        ))
+        session.add(
+            Message(
+                orientation_id=o2.id,
+                author_name="PLIE Lille Avenir",
+                content="Merci pour cette orientation, nous prenons en charge le dossier.",
+                created_at=datetime(2026, 3, 6, 10, 0).isoformat(),
+            )
+        )
 
         session.commit()
         print("Seeded 5 orientations.")

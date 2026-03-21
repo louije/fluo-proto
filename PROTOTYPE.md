@@ -980,6 +980,42 @@ Include it in the appropriate tab pane with `{% include "includes/your_card.html
 2. Add label + CSS class to `STATUS_LABELS` (for statuses) or `EVENT_LABELS` (for events)
 3. Templates pick up the new values automatically via globals
 
+## Linting and formatting
+
+Python code is linted and formatted with [Ruff](https://docs.astral.sh/ruff/). Configuration is in `pyproject.toml`.
+
+### Rules
+
+| Rule set | Description |
+|----------|-------------|
+| `E` | pycodestyle errors |
+| `F` | Pyflakes (unused imports, undefined names) |
+| `W` | pycodestyle warnings |
+| `I` | isort (import sorting) |
+| `UP` | pyupgrade (modernize syntax for target Python version) |
+
+`E501` (line length) is ignored — lines are soft-capped at 120 characters by the formatter, but long strings and URLs are left alone.
+
+### Commands
+
+```bash
+uv run ruff check web/          # lint
+uv run ruff format web/         # auto-format
+uv run ruff check --fix web/    # lint with auto-fix
+```
+
+### Pre-commit hook
+
+A git pre-commit hook runs lint + format check before each commit. Set it up with:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+### CI
+
+Linting runs on every push and PR via `.github/workflows/ci.yml`.
+
 ## Pitfalls and lessons learned
 
 1. **`python-multipart` is not optional** — FastAPI silently fails on form POSTs without it (500, no clear error)
