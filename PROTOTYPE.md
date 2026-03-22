@@ -911,9 +911,47 @@ CMD [".venv/bin/uvicorn", "web.app:app", "--host", "0.0.0.0", "--port", "8080"]
 
 ### GitHub Actions workflow
 
-The deploy workflow builds the Docker image, pushes it to Scaleway's container registry, and triggers a container deploy. Required GitHub secrets: `SCW_ACCESS_KEY`, `SCW_SECRET_KEY`, `SCW_CONTAINER_ID`, `DATABASE_URL`.
+The deploy workflow builds the Docker image, pushes it to Scaleway's container registry, and triggers a container deploy. Required GitHub secrets: `SCW_ACCESS_KEY`, `SCW_SECRET_KEY`, `SCW_CONTAINER_ID`, `SCW_REGISTRY`, `SCW_ORG_ID`, `SCW_PROJECT_ID`, `DATABASE_URL`.
 
 The `DATABASE_URL` is set as an environment variable on the Scaleway container, not baked into the image.
+
+### Container configuration
+
+- **CPU**: 140 mVCPU, **Memory**: 256 MB, **MinScale**: 1 (always-on, no cold starts)
+- Cost at these settings: ~€1.88/month (mostly covered by free tier)
+- Idle baseline: ~136 MB memory (54%), ~16% CPU
+- Under 50 concurrent requests: all 200s, p50 ~0.9s, p99 ~2.4s, memory stable at ~140 MB, CPU peaks ~33%
+
+Adjust via `scw container container update <id> region=fr-par min-scale=N cpu-limit=N memory-limit=N`.
+
+### Monitoring with Scaleway Cockpit
+
+The container exposes metrics via Scaleway Cockpit (Prometheus-compatible). To query:
+
+```bash
+# 1. Create a temporary read-only token
+scw cockpit token create name=tmp token-scopes.0=read_only_metrics -o json
+# Note the secret_key from the output
+
+# 2. Find the metrics data source URL
+scw cockpit data-source list -o json
+# Look for the entry with origin=scaleway and type=metrics
+
+# 3. Query metrics (replace METRICS_URL and TOKEN)
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "$METRICS_URL/prometheus/api/v1/query?query=serverless_container_memory_usage_bytes" | python3 -m json.tool
+
+# 4. Clean up
+scw cockpit token delete <token-id> region=fr-par
+```
+
+Available metrics:
+- `serverless_container_memory_usage_bytes` — current memory usage
+- `serverless_container_cpu_usage_ratio` — CPU usage percentage
+- `serverless_container_requests_per_second` — request rate
+- `serverless_container_instances_total` — running instances
+- `serverless_container_memory_limit_bytes` — memory limit
+- `serverless_container_receive_bytes_total` / `transmit_bytes_total` — network I/O
 
 ## Recipes: how to extend the prototype
 
