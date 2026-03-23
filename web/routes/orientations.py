@@ -18,9 +18,9 @@ def _templates(request: Request):
 
 
 @router.get("/", response_class=HTMLResponse)
-async def orientation_list(request: Request, status: list[str] = Query(default=["nouvelle"])):
+async def orientation_list(request: Request, status: list[str] = Query(default=None)):
     if not status:
-        status = ["nouvelle"]
+        status = ALL_STATUSES
     with Session(engine) as session:
         statement = select(Orientation).where(Orientation.status.in_(status)).order_by(Orientation.created_at.desc())
         orientations = session.exec(statement).all()

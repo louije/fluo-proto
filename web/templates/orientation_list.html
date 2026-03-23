@@ -25,34 +25,36 @@
         {# Filter bar #}
         <div class="s-section__row row">
             <div class="col-12">
-                <div class="btn-dropdown-filter-group mb-3 mb-md-4">
-                    <form method="get" action="/" id="filter-form">
-                        <div class="dropdown">
-                            <button type="button" class="btn btn-dropdown-filter dropdown-toggle" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside" aria-expanded="false">
-                                Statut
-                            </button>
-                            <ul class="dropdown-menu">
-                                {% for status_val in all_statuses %}
-                                {% set label, css = status_labels[status_val] %}
-                                <li class="dropdown-item">
-                                    <div class="form-check">
-                                        <input id="filter-{{ status_val }}"
-                                               class="form-check-input"
-                                               name="status"
-                                               type="checkbox"
-                                               value="{{ status_val }}"
-                                               onchange="this.form.submit()"
-                                               {% if status_val in active_filters %}checked{% endif %}>
-                                        <label for="filter-{{ status_val }}" class="form-check-label">
-                                            {{ label }}
-                                        </label>
-                                    </div>
-                                </li>
-                                {% endfor %}
-                            </ul>
+                <div class="btn-dropdown-filter-group mb-3 mb-md-4 justify-content-between">
+                    <form method="get" action="/" id="filter-form" class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <div class="dropdown">
+                                <button type="button" class="btn btn-dropdown-filter dropdown-toggle{% if active_filters|sort != all_statuses|sort %} has-selected-item{% endif %}" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside" aria-expanded="false">
+                                    Statut
+                                </button>
+                                <ul class="dropdown-menu">
+                                    {% for status_val in all_statuses %}
+                                    {% set label, css = status_labels[status_val] %}
+                                    <li class="dropdown-item">
+                                        <div class="form-check">
+                                            <input id="filter-{{ status_val }}"
+                                                   class="form-check-input"
+                                                   name="status"
+                                                   type="checkbox"
+                                                   value="{{ status_val }}"
+                                                   onchange="this.form.submit()"
+                                                   {% if status_val in active_filters %}checked{% endif %}>
+                                            <label for="filter-{{ status_val }}" class="form-check-label">
+                                                {{ label }}
+                                            </label>
+                                        </div>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
                         </div>
 
-                        {% if active_filters != ["nouvelle"] %}
+                        {% if active_filters|sort != all_statuses|sort %}
                         <a href="/"
                            class="btn btn-ico btn-dropdown-filter"
                            aria-label="Réinitialiser le filtre actif">
