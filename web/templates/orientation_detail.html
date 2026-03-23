@@ -10,7 +10,7 @@
 
                 {# Back link #}
                 <div class="c-prevstep">
-                    <a href="/" class="btn btn-ico btn-link ps-0">
+                    <a href="{{ prefix }}/orientations" class="btn btn-ico btn-link ps-0">
                         <i class="ri-arrow-drop-left-line ri-xl fw-medium" aria-hidden="true"></i>
                         <span>Retour à la liste</span>
                     </a>
@@ -35,7 +35,7 @@
                     {% if o.status == "nouvelle" %}
                     <div class="form-row align-items-center gx-3">
                         <div class="form-group col-12 col-lg-auto">
-                            <form method="post" action="/orientation/{{ o.id }}/accept">
+                            <form method="post" action="{{ prefix }}/orientation/{{ o.id }}/accept">
                                 <button type="submit"
                                         class="btn btn-lg btn-link-white btn-block btn-ico justify-content-center">
                                     <i class="ri-check-line fw-medium" aria-hidden="true"></i>
@@ -44,7 +44,7 @@
                             </form>
                         </div>
                         <div class="form-group col-12 col-lg-auto">
-                            <form method="post" action="/orientation/{{ o.id }}/refuse">
+                            <form method="post" action="{{ prefix }}/orientation/{{ o.id }}/refuse">
                                 <button type="submit"
                                         class="btn btn-lg btn-link-white btn-block btn-ico">
                                     <i class="ri-close-line fw-medium" aria-hidden="true"></i>

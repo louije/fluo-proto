@@ -17,13 +17,25 @@ def _templates(request: Request):
     return request.app.state.templates
 
 
+def _prefix(request: Request) -> str:
+    """Get the current scenario URL prefix (e.g. '/plie')."""
+    scenario = request.state.scenario
+    return f"/{scenario['slug']}" if scenario else ""
+
+
 @router.get("/", response_class=HTMLResponse)
+async def orientation_index(request: Request):
+    return RedirectResponse(f"{_prefix(request)}/orientations", status_code=302)
+
+
+@router.get("/orientations", response_class=HTMLResponse)
 async def orientation_list(request: Request, status: list[str] = Query(default=None)):
     if not status:
         status = ALL_STATUSES
     with Session(engine) as session:
         statement = select(Orientation).where(Orientation.status.in_(status)).order_by(Orientation.created_at.desc())
         orientations = session.exec(statement).all()
+    prefix = _prefix(request)
     return _templates(request).TemplateResponse(
         "orientation_list.html",
         {
@@ -32,6 +44,7 @@ async def orientation_list(request: Request, status: list[str] = Query(default=N
             "active_filters": status,
             "all_statuses": ALL_STATUSES,
             "result_count": len(orientations),
+            "prefix": prefix,
         },
     )
 
@@ -50,6 +63,7 @@ async def orientation_detail(request: Request, orientation_id: int):
         ).all()
         diagnostic_data = json.loads(orientation.diagnostic_data) if orientation.diagnostic_data else None
         status_label, status_class = STATUS_LABELS.get(orientation.status, ("Inconnu", "bg-secondary"))
+    prefix = _prefix(request)
     return _templates(request).TemplateResponse(
         "orientation_detail.html",
         {
@@ -61,34 +75,37 @@ async def orientation_detail(request: Request, orientation_id: int):
             "status_label": status_label,
             "status_class": status_class,
             "modalite_label": MODALITE_LABELS.get(orientation.modalite, orientation.modalite),
+            "prefix": prefix,
         },
     )
 
 
 @router.post("/orientation/{orientation_id}/accept")
-async def accept_orientation(orientation_id: int):
+async def accept_orientation(request: Request, orientation_id: int):
     now = datetime.now().isoformat()
+    prefix = _prefix(request)
     with Session(engine) as session:
         orientation = session.get(Orientation, orientation_id)
         if orientation:
             orientation.status = "acceptee"
             session.add(HistoryEvent(orientation_id=orientation.id, event_type="accepted", created_at=now))
             session.commit()
-            return RedirectResponse(f"/orientation/{orientation.id}", status_code=303)
-    return RedirectResponse("/", status_code=303)
+            return RedirectResponse(f"{prefix}/orientation/{orientation.id}", status_code=303)
+    return RedirectResponse(f"{prefix}/orientations", status_code=303)
 
 
 @router.post("/orientation/{orientation_id}/refuse")
-async def refuse_orientation(orientation_id: int):
+async def refuse_orientation(request: Request, orientation_id: int):
     now = datetime.now().isoformat()
+    prefix = _prefix(request)
     with Session(engine) as session:
         orientation = session.get(Orientation, orientation_id)
         if orientation:
             orientation.status = "refusee"
             session.add(HistoryEvent(orientation_id=orientation.id, event_type="refused", created_at=now))
             session.commit()
-            return RedirectResponse(f"/orientation/{orientation.id}", status_code=303)
-    return RedirectResponse("/", status_code=303)
+            return RedirectResponse(f"{prefix}/orientation/{orientation.id}", status_code=303)
+    return RedirectResponse(f"{prefix}/orientations", status_code=303)
 
 
 @router.post("/orientation/{orientation_id}/message")
@@ -102,12 +119,13 @@ async def post_message(request: Request, orientation_id: int):
         with Session(engine) as session:
             session.add(Message(orientation_id=orientation_id, author_name=author, content=content, created_at=now))
             session.commit()
+    prefix = _prefix(request)
     oid = int(orientation_id)
     redirect_map = {
-        "orienteur": f"/orientation/{oid}/orienteur",
-        "messages": f"/orientation/{oid}#messages",
+        "orienteur": f"{prefix}/orientation/{oid}/orienteur",
+        "messages": f"{prefix}/orientation/{oid}#messages",
     }
-    return RedirectResponse(redirect_map.get(source, f"/orientation/{oid}"), status_code=303)
+    return RedirectResponse(redirect_map.get(source, f"{prefix}/orientation/{oid}"), status_code=303)
 
 
 @router.get("/orientation/{orientation_id}/orienteur", response_class=HTMLResponse)
@@ -120,6 +138,7 @@ async def orienteur_reply(request: Request, orientation_id: int):
             select(Message).where(Message.orientation_id == orientation_id).order_by(Message.created_at.desc())
         ).all()
         status_label, status_class = STATUS_LABELS.get(orientation.status, ("Inconnu", "bg-secondary"))
+    prefix = _prefix(request)
     return _templates(request).TemplateResponse(
         "orienteur_reply.html",
         {
@@ -128,5 +147,6 @@ async def orienteur_reply(request: Request, orientation_id: int):
             "messages": messages,
             "status_label": status_label,
             "status_class": status_class,
+            "prefix": prefix,
         },
     )

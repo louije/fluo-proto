@@ -30,7 +30,7 @@
 
                 {# Reply form #}
                 <div class="c-form mb-3 mb-md-4">
-                    <form method="post" action="/orientation/{{ o.id }}/message">
+                    <form method="post" action="{{ prefix }}/orientation/{{ o.id }}/message">
                         <input type="hidden" name="author_name" value="{{ o.sender_name }}">
                         <input type="hidden" name="source" value="orienteur">
                         <div class="form-group">

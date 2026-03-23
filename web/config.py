@@ -21,3 +21,26 @@ MODALITE_LABELS = {
 }
 
 ALL_STATUSES = ["nouvelle", "acceptee", "refusee"]
+
+SCENARIOS = {
+    "plie": {
+        "slug": "plie",
+        "label": "PLIE Lille Avenir",
+        "description": "Orientations reçues",
+        "nav": [
+            {"label": "Tableau de bord", "icon": "ri-home-line", "href": "/plie/"},
+            {"label": "Orientations", "icon": "ri-compass-line", "href": "/plie/orientations", "active_prefix": "/plie/orientation"},
+            {"label": "Bénéficiaires", "icon": "ri-group-line", "href": "#"},
+        ],
+    },
+    "prescripteur": {
+        "slug": "prescripteur",
+        "label": "France Travail Lille",
+        "description": "Orientations envoyées",
+        "nav": [
+            {"label": "Tableau de bord", "icon": "ri-home-line", "href": "/prescripteur/"},
+            {"label": "Bénéficiaires", "icon": "ri-group-line", "href": "/prescripteur/beneficiaires"},
+            {"label": "Orientations envoyées", "icon": "ri-compass-line", "href": "/prescripteur/orientations", "active_prefix": "/prescripteur/orientation"},
+        ],
+    },
+}

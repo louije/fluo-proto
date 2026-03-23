@@ -1,6 +1,6 @@
 {# Quick message form #}
 <div class="c-box c-box--note mb-3 mb-md-4">
-    <form method="post" action="/orientation/{{ o.id }}/message">
+    <form method="post" action="{{ prefix }}/orientation/{{ o.id }}/message">
         <input type="hidden" name="author_name" value="{{ service_name }}">
         <input type="hidden" name="source" value="sidebar">
         <h3>Commentaires partagés</h3>

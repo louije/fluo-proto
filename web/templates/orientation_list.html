@@ -26,7 +26,7 @@
         <div class="s-section__row row">
             <div class="col-12">
                 <div class="btn-dropdown-filter-group mb-3 mb-md-4 justify-content-between">
-                    <form method="get" action="/" id="filter-form" class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
+                    <form method="get" action="{{ prefix }}/orientations" id="filter-form" class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
                         <div class="d-flex gap-2 flex-wrap">
                             <div class="dropdown">
                                 <button type="button" class="btn btn-dropdown-filter dropdown-toggle{% if active_filters|sort != all_statuses|sort %} has-selected-item{% endif %}" data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside" aria-expanded="false">
@@ -55,7 +55,7 @@
                         </div>
 
                         {% if active_filters|sort != all_statuses|sort %}
-                        <a href="/"
+                        <a href="{{ prefix }}/orientations"
                            class="btn btn-ico btn-dropdown-filter"
                            aria-label="Réinitialiser le filtre actif">
                             <i class="ri-eraser-line fw-medium" aria-hidden="true"></i>
@@ -98,7 +98,7 @@
                                 {% set label, css = status_labels.get(o.status, ("Inconnu", "bg-secondary")) %}
                                 <tr class="align-top">
                                     <td>
-                                        <a class="btn-link" href="/orientation/{{ o.id }}">
+                                        <a class="btn-link" href="{{ prefix }}/orientation/{{ o.id }}">
                                             {{ o.person_last_name }} {{ o.person_first_name }}
                                         </a>
                                         {% if o.person_address %}
@@ -118,7 +118,7 @@
                                     </td>
                                     <td class="text-end w-50px align-middle">
                                         <a class="btn btn-sm btn-link btn-ico-only"
-                                           href="/orientation/{{ o.id }}"
+                                           href="{{ prefix }}/orientation/{{ o.id }}"
                                            data-bs-toggle="tooltip"
                                            data-bs-title="Voir cette demande">
                                             <i class="ri-arrow-drop-right-line fs-lg" aria-label="Voir la demande de {{ o.person_last_name }} {{ o.person_first_name }}"></i>

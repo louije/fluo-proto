@@ -2,7 +2,7 @@
 
 {# Message form #}
 <div class="c-form mb-3 mb-md-4">
-    <form method="post" action="/orientation/{{ o.id }}/message">
+    <form method="post" action="{{ prefix }}/orientation/{{ o.id }}/message">
         <input type="hidden" name="author_name" value="{{ service_name }}">
         <input type="hidden" name="source" value="messages">
         <div class="form-group">

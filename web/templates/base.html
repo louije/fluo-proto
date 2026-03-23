@@ -10,12 +10,13 @@
     <link rel="stylesheet" href="/static/css/overrides.css">
 </head>
 <body class="l-authenticated">
+    {% set scenario = request.state.scenario %}
     <header role="banner" id="header">
         <section class="s-header-authenticated">
             <div class="s-header-authenticated__container container">
                 <div class="s-header-authenticated__row row">
                     <div class="s-header-authenticated__col s-header-authenticated__col--logo-service col-auto d-flex align-items-center pe-0">
-                        <a href="/">
+                        <a href="{{ scenario.nav[0].href if scenario else '/' }}">
                             <img src="/static/vendor/theme-inclusion/images/logo-plateforme-inclusion.svg"
                                  alt="Fluo Proto" height="90">
                         </a>
@@ -29,7 +30,7 @@
                                         <span class="ms-2">Mon espace</span>
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-end">
-                                        <span class="dropdown-item text-muted">PLIE Lille Avenir</span>
+                                        <span class="dropdown-item text-muted">{{ scenario.label if scenario else "Fluo Proto" }}</span>
                                     </div>
                                 </li>
                             </ul>
@@ -50,7 +51,7 @@
                 <div class="dropdown dropdown-organization flex-grow-1 py-4">
                     <span class="btn btn-outline-primary btn-ico btn-block bg-white">
                         <i class="ri-building-line fw-medium" aria-hidden="true"></i>
-                        <span>PLIE Lille Avenir</span>
+                        <span>{{ scenario.label if scenario else "Fluo Proto" }}</span>
                     </span>
                 </div>
                 <div class="border-start border-nuance-08 d-lg-none">
@@ -61,29 +62,21 @@
             </div>
             <div class="offcanvas-body d-flex flex-column">
                 <nav class="flex-grow-1" role="navigation" aria-label="Navigation principale">
+                    {% if scenario %}
                     <ul class="nav nav-tabs flex-column mb-3">
+                        {% for item in scenario.nav %}
                         <li class="nav-item">
-                            <a href="/" class="nav-link">
-                                <i class="ri-home-line fw-medium" aria-hidden="true"></i>
-                                <span>Tableau de bord</span>
+                            <a href="{{ item.href }}" class="nav-link{% if request.url.path == item.href or request.url.path.startswith(item.get('active_prefix', item.href + '/')) %} active{% endif %}">
+                                <i class="{{ item.icon }} fw-medium" aria-hidden="true"></i>
+                                <span>{{ item.label }}</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a href="/" class="nav-link active">
-                                <i class="ri-compass-line fw-medium" aria-hidden="true"></i>
-                                <span>Orientations</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="#" class="nav-link">
-                                <i class="ri-group-line fw-medium" aria-hidden="true"></i>
-                                <span>Bénéficiaires</span>
-                            </a>
-                        </li>
+                        {% endfor %}
                     </ul>
+                    {% endif %}
                 </nav>
                 <div class="d-none d-lg-block mt-auto p-3 text-center">
-                    <a href="/">
+                    <a href="{{ scenario.nav[0].href if scenario else '/' }}">
                         <img src="/static/vendor/theme-inclusion/images/logo-plateforme-inclusion.svg"
                              alt="Fluo Proto" height="60">
                     </a>
@@ -93,9 +86,48 @@
     </header>
 
     <div class="global-messages-container">
-        <div class="alert alert-danger alert-dismissible fade show" role="status">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
-            <strong>PROTOTYPE – Données fictives</strong>
+        <div class="alert alert-danger fade show d-flex align-items-center justify-content-between" role="status">
+            <div>
+                <strong>PROTOTYPE – Données fictives</strong>
+            </div>
+            <button type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    data-bs-toggle="offcanvas"
+                    data-bs-target="#offcanvasScenario"
+                    aria-controls="offcanvasScenario">
+                <i class="ri-group-line fw-medium" aria-hidden="true"></i>
+                Sélectionner un scénario
+            </button>
+        </div>
+    </div>
+
+    {# Scenario selector offcanvas #}
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasScenario" aria-labelledby="offcanvasScenarioLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="offcanvasScenarioLabel">Sélectionner un scénario</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
+        </div>
+        <div class="offcanvas-body">
+            <p class="text-muted mb-3">Chaque scénario simule un type d'utilisateur différent.</p>
+            {% for slug, sc in scenarios.items() %}
+            <a href="/{{ slug }}/"
+               class="c-box d-block mb-3 text-decoration-none{% if scenario and scenario.slug == slug %} border-primary{% endif %}">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="flex-shrink-0">
+                        <i class="ri-account-circle-line ri-xl text-primary" aria-hidden="true"></i>
+                    </div>
+                    <div>
+                        <strong class="d-block">{{ sc.label }}</strong>
+                        <span class="text-muted">{{ sc.description }}</span>
+                    </div>
+                    {% if scenario and scenario.slug == slug %}
+                    <div class="ms-auto">
+                        <span class="badge rounded-pill bg-primary">Actif</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
         </div>
     </div>
 
