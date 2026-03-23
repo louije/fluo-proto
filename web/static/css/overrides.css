@@ -1,0 +1,61 @@
+/* Fluo Proto overrides — not vendored, safe from fetch-assets.sh.
+--------------------------------------------------------------------------- */
+
+/* Narrower permanent sidebar from lg (1024px) instead of xxl (1280px). */
+@media (min-width: 1024px) {
+    .l-authenticated #offcanvasNav {
+        top: 0;
+        right: initial;
+        left: 0;
+        border: 0;
+        z-index: 1030;
+        box-shadow: none;
+        visibility: visible !important;
+        transform: none !important;
+        transition: transform 0s linear !important;
+        background-color: #f8f8f8;
+        width: 240px;
+    }
+
+    .l-authenticated > .s-main .container {
+        --bs-gutter-x: 3rem;
+        margin-left: 240px;
+        max-width: calc(100% - 240px);
+    }
+
+    .l-authenticated .global-messages-container {
+        margin-left: 240px;
+    }
+
+    .l-authenticated > .s-main .s-title-02 {
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+    }
+}
+
+/* Override the theme's 320px/380px values at larger breakpoints. */
+@media (min-width: 1280px) {
+    .l-authenticated #offcanvasNav {
+        width: 240px;
+    }
+
+    .l-authenticated > .s-main .container {
+        margin-left: 240px;
+        max-width: calc(100% - 240px);
+    }
+
+    .l-authenticated .global-messages-container {
+        margin-left: 240px;
+    }
+}
+
+@media (min-width: 1640px) {
+    .l-authenticated #offcanvasNav {
+        width: 240px;
+    }
+
+    .l-authenticated .global-messages-container {
+        margin-left: 240px;
+    }
+}
