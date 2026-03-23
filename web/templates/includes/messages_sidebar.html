@@ -3,12 +3,12 @@
     <form method="post" action="/orientation/{{ o.id }}/message">
         <input type="hidden" name="author_name" value="{{ service_name }}">
         <input type="hidden" name="redirect_to" value="/orientation/{{ o.id }}">
-        <h3>Envoyer un message</h3>
+        <h3>Commentaires partagés</h3>
         <div class="form-group">
-            <label class="visually-hidden" for="sidebar-message">Message</label>
+            <label class="visually-hidden" for="sidebar-message">Commentaire</label>
             <textarea name="content" id="sidebar-message" rows="4"
                       class="form-control" required
-                      placeholder="Votre message..."></textarea>
+                      placeholder="Votre commentaire..."></textarea>
         </div>
         <div class="form-group mt-2">
             <div class="form-row">
@@ -22,13 +22,14 @@
                 </button>
             </div>
         </div>
+        <p class="form-text mt-2">Ces commentaires sont partagés avec les membres de votre organisation et avec la personne qui a émis la demande d'orientation.</p>
     </form>
 </div>
 
 {# Recent messages #}
 {% if messages %}
 <div class="c-box mb-3 mb-md-4">
-    <h3>Derniers messages</h3>
+    <h3>Derniers commentaires</h3>
     <ul class="list-note">
         {% for msg in messages[:3] %}
         <li>
@@ -45,7 +46,7 @@
     {% if messages|length > 3 %}
     <button class="btn btn-outline-primary btn-block bg-white mt-3"
             onclick="document.querySelector('#messages-tab').click()">
-        Voir tous les messages
+        Voir tous les commentaires
     </button>
     {% endif %}
 </div>
