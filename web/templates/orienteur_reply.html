@@ -32,8 +32,7 @@
                 <div class="c-form mb-3 mb-md-4">
                     <form method="post" action="/orientation/{{ o.id }}/message">
                         <input type="hidden" name="author_name" value="{{ o.sender_name }}">
-                        <input type="hidden" name="redirect_to"
-                               value="/orientation/{{ o.id }}/orienteur">
+                        <input type="hidden" name="source" value="orienteur">
                         <div class="form-group">
                             <label class="form-label" for="orienteur-message">
                                 Répondre en tant que {{ o.sender_name }}

@@ -4,7 +4,7 @@
 <div class="c-form mb-3 mb-md-4">
     <form method="post" action="/orientation/{{ o.id }}/message">
         <input type="hidden" name="author_name" value="{{ service_name }}">
-        <input type="hidden" name="redirect_to" value="/orientation/{{ o.id }}#messages">
+        <input type="hidden" name="source" value="messages">
         <div class="form-group">
             <label class="form-label" for="tab-message">Envoyer un message</label>
             <textarea name="content" id="tab-message" rows="4"

@@ -72,9 +72,10 @@ async def accept_orientation(orientation_id: int):
         orientation = session.get(Orientation, orientation_id)
         if orientation:
             orientation.status = "acceptee"
-            session.add(HistoryEvent(orientation_id=orientation_id, event_type="accepted", created_at=now))
+            session.add(HistoryEvent(orientation_id=orientation.id, event_type="accepted", created_at=now))
             session.commit()
-    return RedirectResponse(f"/orientation/{orientation_id}", status_code=303)
+            return RedirectResponse(f"/orientation/{orientation.id}", status_code=303)
+    return RedirectResponse("/", status_code=303)
 
 
 @router.post("/orientation/{orientation_id}/refuse")
@@ -84,9 +85,10 @@ async def refuse_orientation(orientation_id: int):
         orientation = session.get(Orientation, orientation_id)
         if orientation:
             orientation.status = "refusee"
-            session.add(HistoryEvent(orientation_id=orientation_id, event_type="refused", created_at=now))
+            session.add(HistoryEvent(orientation_id=orientation.id, event_type="refused", created_at=now))
             session.commit()
-    return RedirectResponse(f"/orientation/{orientation_id}", status_code=303)
+            return RedirectResponse(f"/orientation/{orientation.id}", status_code=303)
+    return RedirectResponse("/", status_code=303)
 
 
 @router.post("/orientation/{orientation_id}/message")
@@ -94,13 +96,18 @@ async def post_message(request: Request, orientation_id: int):
     form = await request.form()
     content = form.get("content", "").strip()
     author = form.get("author_name", SERVICE_NAME)
-    redirect_to = form.get("redirect_to", f"/orientation/{orientation_id}")
+    source = form.get("source", "")
     if content:
         now = datetime.now().isoformat()
         with Session(engine) as session:
             session.add(Message(orientation_id=orientation_id, author_name=author, content=content, created_at=now))
             session.commit()
-    return RedirectResponse(redirect_to, status_code=303)
+    oid = int(orientation_id)
+    redirect_map = {
+        "orienteur": f"/orientation/{oid}/orienteur",
+        "messages": f"/orientation/{oid}#messages",
+    }
+    return RedirectResponse(redirect_map.get(source, f"/orientation/{oid}"), status_code=303)
 
 
 @router.get("/orientation/{orientation_id}/orienteur", response_class=HTMLResponse)
