@@ -1,4 +1,18 @@
 #!/bin/sh
 set -e
-uvx ruff check prototypes/
-uvx ruff format --check prototypes/
+
+# Lint and format-check all protos and the template (matches CI).
+uvx ruff check prototypes/ _template/
+uvx ruff format --check prototypes/ _template/
+
+# Block Scaleway container URLs from being committed.
+# docs/ is excluded so specs and plans can reference the pattern.
+staged=$(git diff --cached --name-only --diff-filter=ACM | grep -v '^docs/' || true)
+if [ -n "$staged" ]; then
+  if echo "$staged" | xargs -I{} grep -l -E '[a-z0-9-]+\.functions\.fnc\.fr-par\.scw\.cloud' {} 2>/dev/null; then
+    echo ""
+    echo "error: Scaleway container URL found in staged files above."
+    echo "       URLs must not be committed. Remove them and retry."
+    exit 1
+  fi
+fi
