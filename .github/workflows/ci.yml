@@ -18,7 +18,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Lint
-        run: uv run ruff check web/
+        run: uvx ruff check prototypes/
 
       - name: Check formatting
-        run: uv run ruff format --check web/
+        run: uvx ruff format --check prototypes/

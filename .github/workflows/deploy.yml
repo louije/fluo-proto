@@ -3,7 +3,12 @@ name: Deploy
 on:
   push:
     branches: [main]
+    paths: ['prototypes/**']
   workflow_dispatch:
+    inputs:
+      proto:
+        description: 'Proto name to deploy (leave blank to auto-detect from diff)'
+        required: false
 
 permissions:
   contents: read
@@ -13,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Install Scaleway CLI
         run: |
@@ -24,18 +31,42 @@ jobs:
         env:
           SCW_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
           SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
-        run: scw init secret-key="$SCW_SECRET_KEY" access-key="$SCW_ACCESS_KEY" organization-id="${{ secrets.SCW_ORG_ID }}" project-id="${{ secrets.SCW_PROJECT_ID }}" send-telemetry=false with-ssh-key=false install-autocomplete=false
+        run: |
+          scw init secret-key="$SCW_SECRET_KEY" access-key="$SCW_ACCESS_KEY" \
+            organization-id="${{ secrets.SCW_ORG_ID }}" \
+            project-id="${{ secrets.SCW_PROJECT_ID }}" \
+            send-telemetry=false with-ssh-key=false install-autocomplete=false
 
-      - name: Build and push Docker image
+      - name: Login to Scaleway container registry
         env:
           SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
           SCW_REGISTRY: ${{ secrets.SCW_REGISTRY }}
         run: |
-          docker login "${SCW_REGISTRY%/*}" -u nologin --password-stdin <<< "$SCW_SECRET_KEY"
-          docker build --platform linux/amd64 -t "$SCW_REGISTRY:latest" .
-          docker push "$SCW_REGISTRY:latest"
+          docker login "${SCW_REGISTRY%%/*}" -u nologin --password-stdin <<< "$SCW_SECRET_KEY"
 
-      - name: Deploy container
+      - name: Deploy changed protos
         env:
-          SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
-        run: scw container container deploy ${{ secrets.SCW_CONTAINER_ID }} region=fr-par
+          SCW_REGISTRY: ${{ secrets.SCW_REGISTRY }}
+        run: |
+          set -euo pipefail
+          if [ -n "${{ github.event.inputs.proto }}" ]; then
+            protos="${{ github.event.inputs.proto }}"
+          else
+            protos=$(git diff --name-only HEAD^ HEAD \
+              | grep -oE '^prototypes/[^/]+' \
+              | sed 's|^prototypes/||' \
+              | sort -u)
+          fi
+          if [ -z "$protos" ]; then
+            echo "No protos changed, nothing to deploy."
+            exit 0
+          fi
+          for proto in $protos; do
+            if [ ! -d "prototypes/$proto" ]; then
+              echo "Skipping $proto (directory does not exist)"
+              continue
+            fi
+            echo "::group::Deploying $proto"
+            make deploy "$proto"
+            echo "::endgroup::"
+          done
