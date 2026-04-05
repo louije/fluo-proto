@@ -1,4 +1,4 @@
 #!/bin/sh
 set -e
-uv run ruff check web/
-uv run ruff format --check web/
+uvx ruff check prototypes/
+uvx ruff format --check prototypes/

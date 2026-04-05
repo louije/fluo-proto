@@ -15,14 +15,3 @@ dependencies = [
 dev = [
     "ruff>=0.11.0",
 ]
-
-[tool.ruff]
-target-version = "py313"
-line-length = 120
-
-[tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP"]
-ignore = ["E501"]
-
-[tool.ruff.lint.isort]
-known-first-party = ["web"]
