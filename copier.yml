@@ -1,0 +1,15 @@
+_subdirectory: _template
+_templates_suffix: .jinja
+
+proto_name:
+  type: str
+  help: "Proto name (lowercase, DNS-safe, 2-31 chars)"
+  validator: >-
+    {% if not (proto_name | regex_search('^[a-z][a-z0-9-]{1,30}$')) %}
+    Must match ^[a-z][a-z0-9-]{1,30}$
+    {% endif %}
+
+description:
+  type: str
+  help: "One-line description"
+  default: ""
