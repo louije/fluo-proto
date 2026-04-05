@@ -19,7 +19,9 @@ new: ## Scaffold a new proto from _template — usage: make new <name>
 	test -n "$$proto" || { echo "usage: make new <proto>"; exit 1; }; \
 	test ! -d "prototypes/$$proto" || { echo "error: prototypes/$$proto already exists"; exit 1; }; \
 	test -d "_template" || { echo "error: _template/ does not exist"; exit 1; }; \
-	uvx copier copy . "prototypes/$$proto" --data proto_name="$$proto"
+	uvx copier copy . "prototypes/$$proto" --data proto_name="$$proto" --defaults && \
+	echo "Regenerating uv.lock for $$proto..." && \
+	(cd "prototypes/$$proto" && uv lock)
 
 provision: ## Create SCW container + DB for a proto — usage: make provision <name>
 	@proto=$(firstword $(ARGS)); \
