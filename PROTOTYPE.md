@@ -1,6 +1,133 @@
-# Building a les-emplois-like prototype
+# Building a proto in the fluo factory
 
-Guide for an agent building a visually identical prototype to [les-emplois](https://github.com/gip-inclusion/les-emplois), with variant features and modular tab-based layouts. This documents the approach used for fluo-proto and can be followed step-by-step.
+This guide covers how to build a new prototype inside the `fluo-proto-factory` repo. Each proto is a self-contained FastAPI + Jinja2 + PostgreSQL app under `prototypes/<name>/`, visually identical to [les-emplois](https://github.com/gip-inclusion/les-emplois). The factory-root `_template/` directory holds the scaffold, and the `Makefile` exposes operator commands.
+
+## Quickstart: create a new proto
+
+From the factory root:
+
+```bash
+make new recs              # scaffolds prototypes/recs/ from _template/
+make provision recs        # creates Scaleway container + PostgreSQL database
+make dev recs              # starts local PG + uvicorn with hot reload
+```
+
+The first command prompts for a one-line description. The second uses credentials from `~/.config/scw/proto-db.env` to provision infrastructure.
+
+## Deployment
+
+Every push to `main` that touches `prototypes/<name>/` triggers a GitHub Actions deploy of that proto. Manual deploy from a laptop: `make deploy <name>` (requires `scw` CLI, docker login, `SCW_REGISTRY` sourced from `~/.config/scw/proto-db.env`).
+
+## Local iteration
+
+```bash
+make dev recs              # hot reload on localhost:8002
+make reseed recs           # drop + re-seed local DB
+make lint                  # ruff check
+make fmt                   # ruff format
+```
+
+## Seeing the URLs
+
+```bash
+make urls                  # prints name → Scaleway URL for all protos
+```
+
+URLs are not stored in the repo. The `.githooks/pre-commit` hook blocks any attempt to commit a Scaleway container URL.
+
+## Destroying a proto
+
+Destructive. Run by hand:
+
+```sh
+source ~/.config/scw/proto-db.env
+scw container container delete $(scw container container list name=<name> -o json | jq -r '.[0].id')
+scw rdb database delete instance-id=$PROTO_DB_INSTANCE_ID name=<name>
+scw rdb user delete instance-id=$PROTO_DB_INSTANCE_ID name=<name>
+git rm -r prototypes/<name>
+git commit -m "destroy <name>"
+git push
+```
+
+## Ejecting a proto to its own repo
+
+When a throwaway graduates to a keeper:
+
+```sh
+git clone . ../<name>-ejected
+cd ../<name>-ejected
+git filter-repo --subdirectory-filter prototypes/<name> --to-subdirectory-filter .
+gh repo create <name> --private --source . --push
+# Then copy factory-level Scaleway secrets into the new repo and add a standalone deploy workflow.
+```
+
+## If your proto needs auth
+
+Most throwaway protos run with `privacy=public` and the obscure Scaleway URL is the only protection. If you need real auth for user testing, wrap your proto's image in oauth2-proxy.
+
+1. **Replace your proto's `Dockerfile`** with the version below. It installs tini (to reap zombies) and oauth2-proxy, and launches both processes via an entrypoint script:
+
+```dockerfile
+FROM python:3.13-slim
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+RUN apt-get update && apt-get install -y --no-install-recommends tini ca-certificates curl \
+ && rm -rf /var/lib/apt/lists/*
+
+ADD https://github.com/oauth2-proxy/oauth2-proxy/releases/download/v7.15.1/oauth2-proxy-v7.15.1.linux-amd64.tar.gz /tmp/
+RUN tar -xzf /tmp/oauth2-proxy-v7.15.1.linux-amd64.tar.gz -C /tmp \
+ && mv /tmp/oauth2-proxy-v7.15.1.linux-amd64/oauth2-proxy /usr/local/bin/ \
+ && rm -rf /tmp/oauth2-proxy-v7.15.1.linux-amd64*
+
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-cache --no-install-project
+COPY . .
+RUN uv sync --frozen --no-cache
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+EXPOSE 8080
+ENTRYPOINT ["tini", "--"]
+CMD ["/entrypoint.sh"]
+```
+
+2. **Add `prototypes/<name>/entrypoint.sh`:**
+
+```sh
+#!/bin/sh
+set -e
+.venv/bin/uvicorn web.app:app --host 127.0.0.1 --port 8000 &
+exec oauth2-proxy \
+  --http-address=0.0.0.0:8080 \
+  --upstream=http://127.0.0.1:8000 \
+  --reverse-proxy=true \
+  --skip-provider-button=true \
+  --cookie-secure=true \
+  --cookie-httponly=true \
+  --cookie-samesite=lax
+```
+
+3. **Set oauth2-proxy env vars on the Scaleway container** (not in the repo):
+
+```sh
+source ~/.config/scw/proto-db.env
+container_id=$(scw container container list name=<name> -o json | jq -r '.[0].id')
+scw container container update "$container_id" region=fr-par \
+  environment-variables.OAUTH2_PROXY_CLIENT_ID=... \
+  environment-variables.OAUTH2_PROXY_CLIENT_SECRET=... \
+  environment-variables.OAUTH2_PROXY_COOKIE_SECRET="$(openssl rand -base64 32 | tr -- '+/' '-_' | tr -d '=')" \
+  environment-variables.OAUTH2_PROXY_OIDC_ISSUER_URL=https://accounts.google.com \
+  environment-variables.OAUTH2_PROXY_EMAIL_DOMAINS=your-org.fr
+```
+
+4. **Add the callback URL to the Google OAuth client.** After provisioning, visit the Google Cloud Console → APIs & Services → Credentials → your OAuth 2.0 Client ID → Authorized redirect URIs, and add `https://<proto-url>/oauth2/callback`. Google does not expose a public API for this — it is manual.
+
+5. **Redeploy:** `make deploy <name>`.
+
+---
+
+The rest of this document describes the les-emplois design system — component patterns, template structure, common pitfalls. It applies to every proto regardless of auth.
 
 ## Overview
 
