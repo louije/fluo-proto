@@ -27,7 +27,8 @@ SCW_SECRET_KEY=$(scw config get secret-key)
 echo "Provisioning proto: $proto"
 
 # 1. Create DB user with random password
-db_password=$(openssl rand -hex 24)
+# Scaleway requires: 8-128 chars, at least one uppercase, lowercase, digit, and special char.
+db_password="P$(openssl rand -base64 30 | tr -d '/+=' | head -c 28)!1a"
 echo "Creating database user '$proto'..."
 scw rdb user create instance-id="$PROTO_DB_INSTANCE_ID" name="$proto" password="$db_password"
 
