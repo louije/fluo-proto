@@ -40,7 +40,7 @@
                         </thead>
                         <tbody>
                             {% for b in beneficiaries %}
-                            <tr class="align-top">
+                            <tr class="align-middle">
                                 <td>
                                     <a class="btn-link" href="/beneficiary/{{ b.id }}">
                                         {{ b.person_last_name }} {{ b.person_first_name }}
@@ -48,20 +48,23 @@
                                 </td>
                                 <td>
                                     {% for elig in b._eligibility_list %}
-                                    <span class="badge rounded-pill text-nowrap badge-sm {{ eligibility_colors.get(elig, 'bg-secondary') }}">{{ elig }}</span>
+                                    {% set color = eligibility_colors.get(elig, 'bg-secondary') %}
+                                    {% set light_color = color.replace('bg-', 'bg-') ~ '-lighter' %}
+                                    {% set text_color = color.replace('bg-', 'text-') %}
+                                    <span class="badge rounded-pill text-nowrap badge-sm {{ light_color }} {{ text_color }}">{{ elig }}</span>
                                     {% endfor %}
                                 </td>
                                 <td>{{ b.nb_prescriptions }}</td>
                                 <td>
                                     {% if b.modalite %}
-                                        {{ b.modalite }}
+                                        <span class="badge rounded-pill text-nowrap badge-sm bg-info-lighter text-info">{{ b.modalite }}</span>
                                     {% elif b._structure %}
                                         {{ b._structure.name }} ({{ b._structure.type_acronym }})
                                     {% else %}
                                         <span class="text-muted">Inconnue</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-end w-50px align-middle">
+                                <td class="text-end w-50px">
                                     <a class="btn btn-sm btn-link btn-ico-only"
                                        href="/beneficiary/{{ b.id }}"
                                        data-bs-toggle="tooltip"

@@ -16,9 +16,9 @@
                         <h1>
                             {{ b.person_last_name }} {{ b.person_first_name }}
                             {% if b.modalite %}
-                            <span class="badge rounded-pill text-nowrap badge-base bg-info">{{ b.modalite }}</span>
+                            <span class="badge rounded-pill text-nowrap badge-base bg-info-lighter text-info">{{ b.modalite }}</span>
                             {% elif structure %}
-                            <span class="badge rounded-pill text-nowrap badge-base bg-info">{{ structure.name }} ({{ structure.type_acronym }})</span>
+                            <span class="badge rounded-pill text-nowrap badge-base bg-info-lighter text-info">{{ structure.name }} ({{ structure.type_acronym }})</span>
                             {% endif %}
                         </h1>
                     </div>
@@ -27,29 +27,6 @@
                             <i class="ri-compass-line fw-medium" aria-hidden="true"></i>
                             <span>Prescrire une solution</span>
                         </a>
-                    </div>
-                </div>
-
-                {# Modalité / structure bar #}
-                <div class="c-box mb-3">
-                    <div class="row">
-                        <div class="col-12 col-sm">
-                            <h3 class="mb-0">
-                                {% if b.modalite %}
-                                Modalité d'accompagnement : {{ b.modalite }}
-                                {% elif structure %}
-                                Structure référente : {{ structure.name }} ({{ structure.type_acronym }})
-                                {% else %}
-                                Modalité / structure référente : <span class="text-muted">Inconnue</span>
-                                {% endif %}
-                            </h3>
-                        </div>
-                        <div class="col-12 col-sm-auto mt-2 mt-sm-0 d-flex align-items-center">
-                            <a href="/beneficiary/{{ b.id }}/recommendations" class="btn btn-ico btn-outline-primary">
-                                <i class="ri-pencil-line fw-medium" aria-hidden="true"></i>
-                                <span>Modifier</span>
-                            </a>
-                        </div>
                     </div>
                 </div>
 
