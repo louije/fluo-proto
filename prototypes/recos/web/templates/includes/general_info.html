@@ -26,16 +26,12 @@
                     <i class="text-disabled">Inconnue</i>
                     {% endif %}
                 </li>
-                {% if structure %}
+                {% if referent %}
                 <li>
-                    <small>Accompagnateur·rice</small>
-                    <strong>{{ structure.name }}</strong>
+                    <small>{% if structure %}Accompagnateur·rice{% else %}Référent·e France Travail{% endif %}</small>
+                    <strong>{{ referent.first_name }} {{ referent.last_name }}{% if referent._structure %} — {{ referent._structure.name }}{% endif %}</strong>
                 </li>
                 {% endif %}
-                <li>
-                    <small>Référent·e France Travail</small>
-                    <strong>Marie Lefebvre</strong>
-                </li>
             </ul>
         </div>
 

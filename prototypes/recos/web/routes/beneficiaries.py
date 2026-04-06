@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from sqlmodel import Session, select
 
 from ..database import engine
-from ..models import Beneficiary, Structure
+from ..models import Beneficiary, Professional, Structure
 
 router = APIRouter()
 
@@ -55,6 +55,13 @@ async def detail_beneficiary(request: Request, id: int):
         structure = None
         if b.structure_referente_id:
             structure = session.get(Structure, b.structure_referente_id)
+        referent = None
+        if b.referent_id:
+            referent = session.get(Professional, b.referent_id)
+            if referent and referent.structure_id:
+                referent._structure = session.get(Structure, referent.structure_id)
+            else:
+                referent._structure = None
         diagnostic = json.loads(b.diagnostic_data) if b.diagnostic_data else None
     return _templates(request).TemplateResponse(
         "beneficiary_detail.html",
@@ -62,6 +69,7 @@ async def detail_beneficiary(request: Request, id: int):
             "request": request,
             "b": b,
             "structure": structure,
+            "referent": referent,
             "diagnostic": diagnostic,
         },
     )
