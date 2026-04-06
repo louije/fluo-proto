@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Personnes accompagnées{% endblock %}
+{% block content %}
+<section class="s-title-02">
+    <div class="s-title-02__container container">
+        <div class="s-title-02__row row">
+            <div class="s-title-02__col col-12">
+                <div class="c-title">
+                    <div class="c-title__main">
+                        <h1>Personnes accompagnées</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="s-section">
+    <div class="s-section__container container">
+        <div class="s-section__row row">
+            <div class="col-12">
+                <div class="d-flex flex-column flex-md-row align-items-md-center mb-3 mb-md-4">
+                    <div class="flex-md-grow-1">
+                        <p class="mb-0">{{ result_count }} résultat{{ "s" if result_count != 1 else "" }}</p>
+                    </div>
+                </div>
+
+                {% if beneficiaries %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <caption class="visually-hidden">Liste des personnes accompagnées</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Nom Prénom</th>
+                                <th scope="col">Éligibilité</th>
+                                <th scope="col">Nbr prescriptions</th>
+                                <th scope="col">Modalité / structure référente</th>
+                                <th scope="col" class="text-end w-50px"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in beneficiaries %}
+                            <tr class="align-top">
+                                <td>
+                                    <a class="btn-link" href="/beneficiary/{{ b.id }}">
+                                        {{ b.person_last_name }} {{ b.person_first_name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% for elig in b._eligibility_list %}
+                                    <span class="badge rounded-pill text-nowrap badge-sm {{ eligibility_colors.get(elig, 'bg-secondary') }}">{{ elig }}</span>
+                                    {% endfor %}
+                                </td>
+                                <td>{{ b.nb_prescriptions }}</td>
+                                <td>
+                                    {% if b.modalite %}
+                                        {{ b.modalite }}
+                                    {% elif b._structure %}
+                                        {{ b._structure.name }} ({{ b._structure.type_acronym }})
+                                    {% else %}
+                                        <span class="text-muted">Inconnue</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end w-50px align-middle">
+                                    <a class="btn btn-sm btn-link btn-ico-only"
+                                       href="/beneficiary/{{ b.id }}"
+                                       data-bs-toggle="tooltip"
+                                       data-bs-title="Voir ce dossier">
+                                        <i class="ri-arrow-drop-right-line fs-lg"
+                                           aria-label="Voir {{ b.person_last_name }}"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="c-box mb-3 mb-md-4">
+                    <p class="text-muted mb-0">Aucun dossier.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
