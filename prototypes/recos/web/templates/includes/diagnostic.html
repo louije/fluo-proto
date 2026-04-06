@@ -1,13 +1,283 @@
+{# Diagnostic socio-professionnel — dense, glanceable rendering.
+   Ported from explorations-nova/diags/build.ts.
+   Skips empty sections. Uses c-box + list-data + badges. #}
+
+{% macro render_tag(value) %}
+    {% if value and value in tag_colors %}
+        {% set label, css = tag_colors[value] %}
+        <span class="badge rounded-pill text-nowrap badge-sm {{ css }}">{{ label }}</span>
+    {% elif value %}
+        <span class="badge rounded-pill text-nowrap badge-sm bg-secondary">{{ value }}</span>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_agent(agent, date) %}
+    {% if agent or date %}
+    <div class="text-muted fs-sm mt-1">
+        {% if date %}Exploré le {{ date[:10] }}{% endif %}
+        {% if agent %}
+            {% if date %} par {% endif %}
+            {{ agent.prenom or "" }} {{ agent.nom or "" }}
+            {% if agent.structure %}<span class="text-muted"> — {{ agent.structure }}</span>{% endif %}
+        {% endif %}
+    </div>
+    {% endif %}
+{% endmacro %}
+
 <div class="s-section__row row">
     <div class="s-section__col col-12 col-xxl-8">
-        {% if diagnostic %}
-        <div class="c-box mb-3 mb-md-4">
-            <p class="text-muted mb-0">Diagnostic chargé (détail en construction).</p>
-        </div>
-        {% else %}
+        {% if not diagnostic %}
         <div class="c-box mb-3 mb-md-4">
             <p class="text-muted mb-0">Aucun diagnostic disponible.</p>
         </div>
+        {% else %}
+
+        {# ── Projet professionnel ── #}
+        {% set diag = diagnostic.besoinsParDiagnostic[0].diagnostic if diagnostic.besoinsParDiagnostic else none %}
+        {% if diag %}
+        <div class="c-box mb-3 mb-md-4">
+            <h3>
+                <i class="ri-compass-3-line fw-medium" aria-hidden="true"></i>
+                Projet professionnel
+            </h3>
+            <ul class="list-data mb-0">
+                <li>
+                    <small>Métier recherché</small>
+                    <strong>{{ diag.nomMetier or "Aucun métier défini" }}</strong>
+                </li>
+                {% if diag.typologie %}
+                <li>
+                    <small>Typologie</small>
+                    <strong>{{ diag.typologie }}{% if diag.codeSousTypologie %} ({{ diag.codeSousTypologie }}){% endif %}</strong>
+                </li>
+                {% endif %}
+            </ul>
+            {{ render_agent(diag.agent, diag.dateMiseAJour) }}
+
+            {# Offre raisonnable d'emploi #}
+            {% set ore = diagnostic.extra.offreRaisonnableEmploi if diagnostic.extra is defined else none %}
+            {% if ore %}
+            <hr class="my-3">
+            <h4 class="fs-sm fw-bold">Offre raisonnable d'emploi</h4>
+            <ul class="list-data mb-0">
+                {% for key, label in [("experience", "Expérience"), ("typeContratSouhaite", "Contrat souhaité"), ("salaireMinimumAccepte", "Salaire minimum"), ("tempsTravailSouhaite", "Temps de travail"), ("trajetAllerAccepte", "Trajet aller"), ("lieuxDeTravail", "Lieux de travail")] %}
+                {% if ore[key] %}
+                <li>
+                    <small>{{ label }}</small>
+                    <strong>{{ ore[key] }}</strong>
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
         {% endif %}
+
+        {# ── Points forts et besoins ── #}
+        {% set ns = namespace(has_besoins=false) %}
+        {% for bp in diagnostic.besoinsParDiagnostic or [] %}
+            {% for th in bp.thematiquesBesoins or [] %}
+                {% if th.besoins and th.besoins | selectattr("valeur", "ne", "NON_EXPLORE") | list %}
+                    {% set ns.has_besoins = true %}
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+
+        {% if ns.has_besoins %}
+        <div class="c-box mb-3 mb-md-4">
+            <h3>
+                <i class="ri-star-line fw-medium" aria-hidden="true"></i>
+                Points forts et besoins
+            </h3>
+            {% for bp in diagnostic.besoinsParDiagnostic or [] %}
+                {% for th in bp.thematiquesBesoins or [] %}
+                    {% set explored = th.besoins | selectattr("valeur", "ne", "NON_EXPLORE") | list if th.besoins else [] %}
+                    {% if explored %}
+                    <h4 class="fs-sm fw-bold mt-3">{{ th.libelle }}</h4>
+                    <ul class="list-data mb-0">
+                        {% for b in th.besoins | sort(attribute="valeur") %}
+                        {% if b.valeur != "NON_EXPLORE" %}
+                        <li>
+                            <small>{{ b.libelle }}</small>
+                            {{ render_tag(b.valeur) }}
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {# ── Contraintes personnelles ── #}
+        {% set tc = diagnostic.thematiqueContrainte %}
+        {% set identified_contraintes = [] %}
+        {% if tc and tc.contraintes %}
+            {% set identified_contraintes = tc.contraintes | selectattr("valeur", "ne", "NON_ABORDEE") | list %}
+        {% endif %}
+        {% set has_sans_contrainte = tc.declareSansContrainte.flag if tc and tc.declareSansContrainte else false %}
+
+        {% if identified_contraintes or has_sans_contrainte %}
+        <div class="c-box mb-3 mb-md-4">
+            <h3>
+                <i class="ri-alert-line fw-medium" aria-hidden="true"></i>
+                Contraintes personnelles
+            </h3>
+            {% if has_sans_contrainte %}
+            <p class="text-muted fs-sm">
+                Déclaré sans contrainte personnelle
+                {% if tc.declareSansContrainte.date %} le {{ tc.declareSansContrainte.date[:10] }}{% endif %}
+            </p>
+            {% endif %}
+            {% for c in identified_contraintes %}
+            <div class="{% if not loop.first %}mt-3 pt-3 border-top{% endif %}">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <strong class="fs-sm">{{ c.libelle }}</strong>
+                    {% if c.estPrioritaire %}
+                    <span class="badge rounded-pill badge-sm bg-purple-lighter text-purple">Prioritaire</span>
+                    {% endif %}
+                    {% if c.impact and c.impact != "NON_RENSEIGNE" %}
+                    {{ render_tag(c.impact) }}
+                    {% endif %}
+                </div>
+                {% if c.situations %}
+                <div class="fs-xs text-muted fw-bold mt-2 mb-1">Situation</div>
+                <ul class="list-data mb-0">
+                    {% for s in c.situations %}
+                    <li>
+                        <small>{{ s.libelle }}</small>
+                        {{ render_tag(s.valeur) }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% if c.objectifs %}
+                <div class="fs-xs text-muted fw-bold mt-2 mb-1">Objectifs</div>
+                <ul class="list-data mb-0">
+                    {% for o in c.objectifs %}
+                    <li>
+                        <small>{{ o.libelle }}</small>
+                        {{ render_tag(o.valeur) }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {{ render_agent(tc.agent, tc.dateExploration) }}
+        </div>
+        {% endif %}
+
+        {# ── Confiance et capacité à agir ── #}
+        {% set pa = diagnostic.pouvoirAgir %}
+        {% if pa and (pa.confiance or pa.accompagnement) %}
+        <div class="c-box mb-3 mb-md-4">
+            <h3>
+                <i class="ri-empathize-line fw-medium" aria-hidden="true"></i>
+                Confiance et capacité à agir
+            </h3>
+            <ul class="list-data mb-0">
+                {% if pa.confiance %}
+                <li>
+                    <small>Confiant(e) pour mener ses démarches ?</small>
+                    {{ render_tag(pa.confiance) }}
+                </li>
+                {% endif %}
+                {% if pa.accompagnement %}
+                <li>
+                    <small>Besoin d'accompagnement ?</small>
+                    {{ render_tag(pa.accompagnement) }}
+                </li>
+                {% endif %}
+            </ul>
+            {% if pa.resultatAnalyse %}
+            <div class="mt-2 p-2 bg-light rounded fs-sm">
+                <strong>Analyse :</strong> {{ pa.resultatAnalyse }}
+            </div>
+            {% endif %}
+            {{ render_agent(pa.agent, pa.dateExploration) }}
+        </div>
+        {% endif %}
+
+        {# ── Maîtrise du numérique ── #}
+        {% set an = diagnostic.autonomieNumerique %}
+        {% if an and (an.contrainte or an.besoin) %}
+        <div class="c-box mb-3 mb-md-4">
+            <h3>
+                <i class="ri-computer-line fw-medium" aria-hidden="true"></i>
+                Maîtrise du numérique
+            </h3>
+            {% if an.contrainte %}
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <strong class="fs-sm">{{ an.contrainte.libelle }}</strong>
+                {{ render_tag(an.contrainte.valeur) }}
+            </div>
+            {% if an.contrainte.situations %}
+            <div class="fs-xs text-muted fw-bold mt-2 mb-1">Situation</div>
+            <ul class="list-data mb-0">
+                {% for s in an.contrainte.situations %}
+                <li>
+                    <small>{{ s.libelle }}</small>
+                    {{ render_tag(s.valeur) }}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% if an.contrainte.objectifs %}
+            <div class="fs-xs text-muted fw-bold mt-2 mb-1">Objectifs</div>
+            <ul class="list-data mb-0">
+                {% for o in an.contrainte.objectifs %}
+                <li>
+                    <small>{{ o.libelle }}</small>
+                    {{ render_tag(o.valeur) }}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% endif %}
+            {% if an.besoin %}
+            <ul class="list-data mb-0 mt-2">
+                <li>
+                    <small>{{ an.besoin.libelle }}</small>
+                    {{ render_tag(an.besoin.valeur) }}
+                </li>
+            </ul>
+            {% endif %}
+            {{ render_agent(an.agent, an.dateExploration) }}
+        </div>
+        {% endif %}
+
+        {# ── Modalité de suivi ── #}
+        {% set ms = diagnostic.extra.modaliteSuivi if diagnostic.extra is defined else none %}
+        {% if ms and ms.modaliteEnCours %}
+        <div class="c-box mb-3 mb-md-4">
+            <h3>
+                <i class="ri-user-settings-line fw-medium" aria-hidden="true"></i>
+                Modalité de suivi
+            </h3>
+            <ul class="list-data mb-0">
+                <li>
+                    <small>Modalité en cours</small>
+                    <strong>{{ ms.modaliteEnCours }}</strong>
+                </li>
+                {% if ms.dateEnregistrement %}
+                <li>
+                    <small>Depuis le</small>
+                    <strong>{{ ms.dateEnregistrement[:10] }}</strong>
+                </li>
+                {% endif %}
+                {% if ms.accompagnementDematerialise is not none %}
+                <li>
+                    <small>Accompagnement dématérialisé</small>
+                    <strong>{{ "Oui" if ms.accompagnementDematerialise else "Non" }}</strong>
+                </li>
+                {% endif %}
+            </ul>
+            {{ render_agent(ms.agent, ms.dateEnregistrement) }}
+        </div>
+        {% endif %}
+
+        {% endif %}{# end if diagnostic #}
     </div>
 </div>
