@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Recommandations — {{ b.person_last_name }}{% endblock %}
+{% block content %}
+<section class="s-title-02">
+    <div class="s-title-02__container container">
+        <div class="s-title-02__row row">
+            <div class="s-title-02__col col-12">
+                <div class="c-prevstep">
+                    <a href="/beneficiary/{{ b.id }}" class="btn btn-ico btn-link ps-0">
+                        <i class="ri-arrow-drop-left-line ri-xl fw-medium" aria-hidden="true"></i>
+                        <span>Retour à la fiche</span>
+                    </a>
+                </div>
+                <div class="c-title">
+                    <div class="c-title__main">
+                        <h1>Rechercher une solution</h1>
+                    </div>
+                </div>
+
+                <div class="alert alert-primary fade show mb-3" role="status">
+                    <strong>Vous recherchez actuellement pour {{ b.person_last_name }} {{ b.person_first_name }}</strong>
+                </div>
+
+                <ul class="s-tabs-01__nav nav nav-tabs mb-0" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="employers-tab" data-bs-toggle="tab" href="#employers"
+                           role="tab" aria-controls="employers" aria-selected="false">
+                            Employeurs (SIAE et GEIQ)
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="positions-tab" data-bs-toggle="tab" href="#positions"
+                           role="tab" aria-controls="positions" aria-selected="false">
+                            Postes ouverts
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="services-tab" data-bs-toggle="tab" href="#services"
+                           role="tab" aria-controls="services" aria-selected="false">
+                            Services d'insertion
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link active" id="solutions-tab" data-bs-toggle="tab" href="#solutions"
+                           role="tab" aria-controls="solutions" aria-selected="true">
+                            Solutions de parcours
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="s-section">
+    <div class="s-section__container container">
+        <div class="tab-content">
+            <div class="tab-pane fade" id="employers" role="tabpanel" aria-labelledby="employers-tab">
+                <div class="s-section__row row">
+                    <div class="s-section__col col-12">
+                        <div class="c-box mb-3 mb-md-4">
+                            <p class="text-muted mb-0">Aucun résultat disponible pour le moment.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="positions" role="tabpanel" aria-labelledby="positions-tab">
+                <div class="s-section__row row">
+                    <div class="s-section__col col-12">
+                        <div class="c-box mb-3 mb-md-4">
+                            <p class="text-muted mb-0">Aucun résultat disponible pour le moment.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="services" role="tabpanel" aria-labelledby="services-tab">
+                <div class="s-section__row row">
+                    <div class="s-section__col col-12">
+                        <div class="c-box mb-3 mb-md-4">
+                            <p class="text-muted mb-0">Aucun résultat disponible pour le moment.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade show active" id="solutions" role="tabpanel" aria-labelledby="solutions-tab">
+                <div class="s-section__row row">
+                    <div class="s-section__col col-12">
+                        <div class="c-box mb-3 mb-md-4">
+                            <p class="text-muted mb-0">Aucune recommandation disponible pour le moment.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

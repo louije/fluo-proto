@@ -65,3 +65,15 @@ async def detail_beneficiary(request: Request, id: int):
             "diagnostic": diagnostic,
         },
     )
+
+
+@router.get("/beneficiary/{id}/recommendations", response_class=HTMLResponse)
+async def recommendations(request: Request, id: int):
+    with Session(engine) as session:
+        b = session.get(Beneficiary, id)
+        if not b:
+            return HTMLResponse("Not found", status_code=404)
+    return _templates(request).TemplateResponse(
+        "recommendations.html",
+        {"request": request, "b": b},
+    )
