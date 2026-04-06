@@ -2,15 +2,15 @@
     <div class="s-section__col col-12 col-xxl-8">
         {# Modalité / structure card #}
         <div class="c-box mb-3 mb-md-4">
-            <div class="row">
+            <div class="row mb-3">
                 <div class="col-12 col-sm">
                     <h3 class="mb-0">
                         {% if b.modalite %}
-                        Modalité d'accompagnement : {{ b.modalite }}
+                        Modalité d'accompagnement
                         {% elif structure %}
-                        Structure référente : {{ structure.name }} ({{ structure.type_acronym }})
+                        Structure référente
                         {% else %}
-                        Modalité / structure référente : <span class="text-muted">Inconnue</span>
+                        Modalité / structure référente
                         {% endif %}
                     </h3>
                 </div>
@@ -21,6 +21,20 @@
                     </a>
                 </div>
             </div>
+            <ul class="list-data mb-0">
+                <li>
+                    {% if b.modalite %}
+                    <small>Modalité</small>
+                    <strong>{{ b.modalite }}</strong>
+                    {% elif structure %}
+                    <small>Structure</small>
+                    <strong>{{ structure.name }} ({{ structure.type_acronym }})</strong>
+                    {% else %}
+                    <small>Statut</small>
+                    <i class="text-disabled">Inconnue</i>
+                    {% endif %}
+                </li>
+            </ul>
         </div>
 
         {# Qui accompagne cette personne #}
