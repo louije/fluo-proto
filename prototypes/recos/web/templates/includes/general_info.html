@@ -1,18 +1,10 @@
 <div class="s-section__row row">
     <div class="s-section__col col-12 col-xxl-8">
-        {# Modalité / structure card #}
+        {# Accompagnement #}
         <div class="c-box mb-3 mb-md-4">
             <div class="row mb-3">
                 <div class="col-12 col-sm">
-                    <h3 class="mb-0">
-                        {% if b.modalite %}
-                        Modalité d'accompagnement
-                        {% elif structure %}
-                        Structure référente
-                        {% else %}
-                        Modalité / structure référente
-                        {% endif %}
-                    </h3>
+                    <h3 class="mb-0">Accompagnement</h3>
                 </div>
                 <div class="col-12 col-sm-auto mt-2 mt-sm-0 d-flex align-items-center">
                     <a href="/beneficiary/{{ b.id }}/recommendations" class="btn btn-ico btn-outline-primary">
@@ -27,20 +19,13 @@
                     <small>Modalité</small>
                     <strong>{{ b.modalite }}</strong>
                     {% elif structure %}
-                    <small>Structure</small>
+                    <small>Structure référente</small>
                     <strong>{{ structure.name }} ({{ structure.type_acronym }})</strong>
                     {% else %}
-                    <small>Statut</small>
+                    <small>Modalité / structure</small>
                     <i class="text-disabled">Inconnue</i>
                     {% endif %}
                 </li>
-            </ul>
-        </div>
-
-        {# Qui accompagne cette personne #}
-        <div class="c-box mb-3 mb-md-4">
-            <h3>Qui accompagne cette personne ?</h3>
-            <ul class="list-data mb-0">
                 <li>
                     <small>Référent</small>
                     <strong>Marie Lefebvre</strong>
