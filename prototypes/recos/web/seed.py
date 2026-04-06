@@ -1,10 +1,11 @@
 import json
+import sqlite3
 from pathlib import Path
 
 from sqlmodel import Session
 
 from .database import engine, init_db
-from .models import Beneficiary, Professional, Solution, Structure
+from .models import Beneficiary, Professional, Service, Solution, Structure
 
 _data_dir = Path(__file__).parent.parent / "data"
 
@@ -72,23 +73,7 @@ PROFILES = [
 
 
 SOLUTIONS = [
-    # Modalités FT — always available, no restrictions
-    {
-        "name": "Modalité Suivi",
-        "solution_type": "modalite_ft",
-        "type_label": "Modalité FT",
-        "description": "Accompagnement ponctuel pour les demandeurs d'emploi autonomes dans leurs démarches.",
-        "conditions_admission": "Inscription France Travail active",
-        "places_disponibles": 99,
-    },
-    {
-        "name": "Modalité Guidé",
-        "solution_type": "modalite_ft",
-        "type_label": "Modalité FT",
-        "description": "Accompagnement régulier avec un conseiller référent pour structurer le parcours de retour à l'emploi.",
-        "conditions_admission": "Inscription France Travail active",
-        "places_disponibles": 99,
-    },
+    # Modalité FT — only Renforcé, recommended only if different from current
     {
         "name": "Modalité Renforcé",
         "solution_type": "modalite_ft",
@@ -295,9 +280,120 @@ SOLUTIONS = [
 ]
 
 
+THEMATIQUE_TO_CATEGORY = {
+    "mobilite": ("Mobilité", "mobilite"),
+    "numerique": ("Numérique", "numerique"),
+    "se-former": ("Formation", "formation"),
+    "trouver-un-emploi": ("Emploi", "emploi"),
+    "preparer-sa-candidature": ("Emploi", "emploi"),
+    "choisir-un-metier": ("Emploi", "emploi"),
+    "difficultes-administratives-ou-juridiques": ("Démarches administratives", "administratif"),
+    "sante": ("Santé", "sante"),
+    "logement-hebergement": ("Logement", "logement"),
+    "famille": ("Famille et parentalité", "famille"),
+    "remobilisation": ("Remobilisation", "remobilisation"),
+    "lecture-ecriture-calcul": ("Français et compétences de base", "francais"),
+}
+
+DATA_INCLUSION_DB = "/Users/louije/Development/gip/data-inclusion.db"
+
+
+def _seed_services(session: Session) -> None:
+    """Seed Service records from data-inclusion.db SQLite database."""
+    conn = sqlite3.connect(DATA_INCLUSION_DB)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT s.nom, s.thematiques, s.commune, s.code_postal, s.description,
+               st.nom as structure_name
+        FROM services s
+        LEFT JOIN structures st ON s.structure_id = st.id
+        WHERE s.code_postal IN ('59000','59100','59200','59260','59650','59800')
+          AND s.thematiques IS NOT NULL
+          AND s.thematiques != '[]'
+          AND s.thematiques != ''
+        ORDER BY
+            CASE s.code_postal
+                WHEN '59000' THEN 1
+                WHEN '59800' THEN 2
+                WHEN '59260' THEN 3
+                WHEN '59650' THEN 4
+                WHEN '59100' THEN 5
+                WHEN '59200' THEN 6
+            END,
+            s.nom
+    """)
+
+    # Track how many per category to ensure variety
+    category_counts: dict[str, int] = {}
+    max_per_category = 5
+    seen_names: set[str] = set()
+    services_added = 0
+
+    for row in cur.fetchall():
+        if services_added >= 30:
+            break
+
+        name = row["nom"]
+        if not name or name in seen_names:
+            continue
+
+        # Skip garde d'enfants
+        if "garde" in name.lower() and "enfant" in name.lower():
+            continue
+
+        thematiques_raw = row["thematiques"]
+        try:
+            thematiques = json.loads(thematiques_raw)
+        except (json.JSONDecodeError, TypeError):
+            continue
+
+        # Find first matching category
+        category_key = None
+        category_label = None
+        for thematique in thematiques:
+            prefix = thematique.split("--")[0] if "--" in thematique else thematique
+            if prefix in THEMATIQUE_TO_CATEGORY:
+                category_label, category_key = THEMATIQUE_TO_CATEGORY[prefix]
+                break
+
+        if not category_key:
+            continue
+
+        if category_counts.get(category_key, 0) >= max_per_category:
+            continue
+
+        structure_name = row["structure_name"] or ""
+        description = row["description"] or ""
+        # Truncate long descriptions
+        if len(description) > 300:
+            description = description[:297] + "..."
+
+        svc = Service(
+            name=name,
+            structure_name=structure_name,
+            commune=row["commune"],
+            code_postal=row["code_postal"],
+            description=description,
+            category=category_key,
+            category_label=category_label,
+            thematiques=thematiques_raw,
+        )
+        session.add(svc)
+        seen_names.add(name)
+        category_counts[category_key] = category_counts.get(category_key, 0) + 1
+        services_added += 1
+
+    conn.close()
+
+
 def seed() -> None:
     init_db()
     with Session(engine) as session:
+        # Services from data-inclusion
+        _seed_services(session)
+
         # Solutions
         for sol_data in SOLUTIONS:
             sol = Solution(

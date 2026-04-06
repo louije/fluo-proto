@@ -30,7 +30,6 @@
                         <a class="nav-link" id="employers-tab" data-bs-toggle="tab" href="#employers"
                            role="tab" aria-controls="employers" aria-selected="false">
                             Employeurs (SIAE et GEIQ)
-                            <span class="badge rounded-pill bg-info ms-1">{{ results.employeurs|length }}</span>
                         </a>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -105,6 +104,18 @@
             </div>
 
             {# ── Services d'insertion tab ── #}
+            {% set category_icons = {
+                "Mobilité": "ri-car-line",
+                "Numérique": "ri-computer-line",
+                "Formation": "ri-book-open-line",
+                "Emploi": "ri-briefcase-line",
+                "Démarches administratives": "ri-file-text-line",
+                "Santé": "ri-heart-pulse-line",
+                "Logement": "ri-home-4-line",
+                "Famille et parentalité": "ri-parent-line",
+                "Remobilisation": "ri-mental-health-line",
+                "Français et compétences de base": "ri-translate-2",
+            } %}
             <div class="tab-pane fade" id="services" role="tabpanel" aria-labelledby="services-tab">
                 <div class="s-section__row row">
                     <div class="s-section__col col-12">
@@ -122,15 +133,24 @@
                             </p>
                         </div>
 
-                        {% if results.services %}
-                        {% for s in results.services %}
+                        {% if services_grouped %}
+                        {% for category_label, svc_list in services_grouped.items() %}
+                        <h3 class="h6 mb-3">
+                            <i class="{{ category_icons.get(category_label, 'ri-service-line') }} fw-medium" aria-hidden="true"></i>
+                            {{ category_label }}
+                            <span class="text-muted fs-sm fw-normal ms-1">({{ svc_list|length }})</span>
+                        </h3>
+                        {% for s in svc_list %}
                         <div class="c-box mb-3">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <h3 class="h6 mb-1">
-                                        {{ s.name }}
-                                        <span class="badge rounded-pill badge-sm bg-info ms-1">{{ s.type_label }}</span>
-                                    </h3>
+                                    <h4 class="h6 mb-1">{{ s.name }}</h4>
+                                    {% if s.structure_name %}
+                                    <p class="text-muted fs-sm mb-1">
+                                        <i class="ri-building-line fw-medium" aria-hidden="true"></i>
+                                        {{ s.structure_name }}
+                                    </p>
+                                    {% endif %}
                                     {% if s.commune %}
                                     <p class="text-muted fs-sm mb-1">
                                         <i class="ri-map-pin-line fw-medium" aria-hidden="true"></i>
@@ -141,16 +161,17 @@
                                     <p class="fs-sm mb-0">{{ s.description[:120] }}{% if s.description|length > 120 %}...{% endif %}</p>
                                     {% endif %}
                                 </div>
-                                <a href="/solution/{{ s.id }}?from={{ b.id }}" class="btn btn-outline-primary btn-sm btn-ico ms-3 flex-shrink-0">
+                                <a href="#" class="btn btn-outline-primary btn-sm btn-ico ms-3 flex-shrink-0">
                                     <span>Voir</span>
                                     <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
                                 </a>
                             </div>
                         </div>
                         {% endfor %}
+                        {% endfor %}
                         {% else %}
                         <div class="c-box mb-3 mb-md-4">
-                            <p class="text-muted mb-0">Aucun résultat disponible.</p>
+                            <p class="text-muted mb-0">Aucun service d'insertion trouvé à proximité.</p>
                         </div>
                         {% endif %}
                     </div>

@@ -1,9 +1,10 @@
 """Simple matching logic for solution recommendations."""
 
 import json
+from collections import defaultdict
 from datetime import date
 
-from .models import Beneficiary, Solution
+from .models import Beneficiary, Service, Solution
 
 # Cities in the Lille metropolitan area
 LILLE_METRO = {
@@ -170,12 +171,38 @@ def compute_recommendations(beneficiary: Beneficiary, solutions: list[Solution])
     employeurs = [s for s in matched if s.solution_type in ("aci", "ei", "etti", "geiq")]
     parcours = [s for s in matched if s.solution_type in ("modalite_ft", "plie", "e2c", "epide")]
 
+    # Filter modalités FT: only keep if different from person's current modalité
+    current_modalite = beneficiary.modalite  # e.g. "Guidé"
+    if current_modalite:
+        # Remove modalité FT that matches the person's current one
+        parcours = [
+            s for s in parcours if s.solution_type != "modalite_ft" or current_modalite.lower() not in s.name.lower()
+        ]
+
     # Build recommended list: prioritize solutions with available places
     available = [s for s in matched if s.places_disponibles > 0]
     saturated = [s for s in matched if s.places_disponibles == 0]
 
-    # Mix: available first, then saturated, take top 4
-    recommended = (available + saturated)[:4]
+    # Also filter modalités from recommended list
+    all_candidates = available + saturated
+    if current_modalite:
+        all_candidates = [
+            s
+            for s in all_candidates
+            if s.solution_type != "modalite_ft" or current_modalite.lower() not in s.name.lower()
+        ]
+
+    # At most 1 modalité FT in recommended
+    recommended = []
+    has_modalite = False
+    for s in all_candidates:
+        if len(recommended) >= 4:
+            break
+        if s.solution_type == "modalite_ft":
+            if has_modalite:
+                continue
+            has_modalite = True
+        recommended.append(s)
 
     return {
         "recommended": recommended,
@@ -183,3 +210,22 @@ def compute_recommendations(beneficiary: Beneficiary, solutions: list[Solution])
         "services": matched,
         "parcours": parcours,
     }
+
+
+def get_services_for_beneficiary(beneficiary: Beneficiary, services: list[Service]) -> dict[str, list[Service]]:
+    """Return services grouped by category_label, filtered by proximity."""
+    person_city = _person_city(beneficiary)
+    person_city_lower = person_city.lower() if person_city else None
+
+    grouped: dict[str, list[Service]] = defaultdict(list)
+    for svc in services:
+        # Filter by proximity: same commune or both in Lille metro
+        if svc.commune and person_city_lower:
+            svc_commune_lower = svc.commune.lower()
+            if svc_commune_lower != person_city_lower and not (
+                person_city_lower in LILLE_METRO and svc_commune_lower in LILLE_METRO
+            ):
+                continue
+        grouped[svc.category_label].append(svc)
+
+    return dict(grouped)

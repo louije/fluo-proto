@@ -5,8 +5,8 @@ from fastapi.responses import HTMLResponse
 from sqlmodel import Session, select
 
 from ..database import engine
-from ..matching import compute_recommendations
-from ..models import Beneficiary, Professional, Solution, Structure
+from ..matching import compute_recommendations, get_services_for_beneficiary
+from ..models import Beneficiary, Professional, Service, Solution, Structure
 
 router = APIRouter()
 
@@ -87,6 +87,8 @@ async def recommendations(request: Request, id: int):
             structure = session.get(Structure, b.structure_referente_id)
         solutions = session.exec(select(Solution)).all()
         results = compute_recommendations(b, solutions)
+        all_services = session.exec(select(Service)).all()
+        services_grouped = get_services_for_beneficiary(b, all_services)
     return _templates(request).TemplateResponse(
         "recommendations.html",
         {
@@ -94,6 +96,7 @@ async def recommendations(request: Request, id: int):
             "b": b,
             "structure": structure,
             "results": results,
+            "services_grouped": services_grouped,
         },
     )
 

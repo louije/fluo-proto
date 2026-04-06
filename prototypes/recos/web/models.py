@@ -1,6 +1,18 @@
 from sqlmodel import Field, SQLModel
 
 
+class Service(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    structure_name: str
+    commune: str | None = None
+    code_postal: str | None = None
+    description: str | None = None
+    category: str  # "mobilite", "numerique", "formation", etc.
+    category_label: str  # "Mobilité", "Numérique", "Formation", etc.
+    thematiques: str | None = None  # original thematiques JSON for reference
+
+
 class Solution(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
