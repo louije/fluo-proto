@@ -1193,3 +1193,4 @@ Linting runs on every push and PR via `.github/workflows/ci.yml`.
 8. **DATABASE_URL prefix** — SQLAlchemy/SQLModel with psycopg3 requires `postgresql+psycopg://`, not `postgresql://`
 9. **JSON fields** — store as TEXT in PostgreSQL, parse with `json.loads()` in routes before passing to templates. Don't try to access nested JSON properties directly on SQLModel objects in templates.
 10. **Template globals vs route context** — shared labels/config go in `templates.env.globals` (set once in `web/app.py`). Page-specific data (the orientation, messages, etc.) goes in the route's template context.
+11. **URLs and file names in English** — following the les-emplois convention. Route paths, Python file names, and template file names use English (`/beneficiaries`, `beneficiaries.py`, `beneficiary_detail.html`). UI labels stay in French. This keeps code navigation consistent across protos and matches what les-emplois does.
