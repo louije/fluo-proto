@@ -168,8 +168,19 @@ def compute_recommendations(beneficiary: Beneficiary, solutions: list[Solution])
     matched = [s for s in nearby if _matches(beneficiary, s, profile)]
 
     # Group by category
-    employeurs = [s for s in matched if s.solution_type in ("aci", "ei", "etti", "geiq")]
-    parcours = [s for s in matched if s.solution_type in ("modalite_ft", "plie", "e2c", "epide")]
+    employeur_types = {"aci", "ei", "ai", "etti", "geiq", "cui_cie"}
+    parcours_types = {
+        "modalite_ft",
+        "plie",
+        "e2c",
+        "epide",
+        "cui_cae",
+        "prepa_competences",
+        "promo_16_18",
+        "cdd_tremplin_ea",
+    }
+    employeurs = [s for s in matched if s.solution_type in employeur_types]
+    parcours = [s for s in matched if s.solution_type in parcours_types]
 
     # Filter modalités FT: only keep if different from person's current modalité
     current_modalite = beneficiary.modalite  # e.g. "Guidé"
