@@ -3,7 +3,7 @@
         <h3>Prescriptions</h3>
         {% if prescriptions %}
         {% for p in prescriptions %}
-        <div class="c-box mb-3">
+        <a href="/prescription/{{ p.id }}" class="c-box mb-3 d-block text-decoration-none">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <h4 class="h6 mb-0">
                     {% if p._solution %}
@@ -23,7 +23,7 @@
                 {{ p.message }}
             </blockquote>
             {% endif %}
-        </div>
+        </a>
         {% endfor %}
         {% else %}
         <p class="text-muted mb-0">Aucune prescription pour le moment.</p>

@@ -149,7 +149,28 @@ async def prescribe(beneficiary_id: int, solution_id: int, message: str = Form("
         session.add(p)
         b.nb_prescriptions += 1
         session.commit()
-    return RedirectResponse("/prescriptions-sent", status_code=303)
+        session.refresh(p)
+        prescription_id = p.id
+    return RedirectResponse(f"/prescription/{prescription_id}", status_code=303)
+
+
+@router.get("/prescription/{id}", response_class=HTMLResponse)
+async def prescription_detail(request: Request, id: int):
+    with Session(engine) as session:
+        p = session.get(Prescription, id)
+        if not p:
+            return HTMLResponse("Not found", status_code=404)
+        beneficiary = session.get(Beneficiary, p.beneficiary_id)
+        solution = session.get(Solution, p.solution_id)
+    return _templates(request).TemplateResponse(
+        "prescription_detail.html",
+        {
+            "request": request,
+            "prescription": p,
+            "beneficiary": beneficiary,
+            "solution": solution,
+        },
+    )
 
 
 @router.get("/prescriptions-sent", response_class=HTMLResponse)

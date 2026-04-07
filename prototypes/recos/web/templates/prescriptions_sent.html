@@ -60,15 +60,13 @@
                                     <span class="badge rounded-pill text-nowrap badge-sm {{ status_info[1] }}">{{ status_info[0] }}</span>
                                 </td>
                                 <td class="text-end w-50px">
-                                    {% if p._beneficiary %}
                                     <a class="btn btn-sm btn-link btn-ico-only"
-                                       href="/beneficiary/{{ p._beneficiary.id }}"
+                                       href="/prescription/{{ p.id }}"
                                        data-bs-toggle="tooltip"
-                                       data-bs-title="Voir ce dossier">
+                                       data-bs-title="Voir cette prescription">
                                         <i class="ri-arrow-drop-right-line fs-lg"
-                                           aria-label="Voir {{ p._beneficiary.person_last_name }}"></i>
+                                           aria-label="Voir la prescription"></i>
                                     </a>
-                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
