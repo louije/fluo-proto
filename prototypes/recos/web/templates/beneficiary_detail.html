@@ -23,9 +23,10 @@
                         </h1>
                     </div>
                     <div class="c-title__actions d-flex gap-2">
-                        <a href="/beneficiary/{{ b.id }}/recommendations" class="btn btn-primary btn-ico">
-                            <i class="ri-compass-line fw-medium" aria-hidden="true"></i>
-                            <span>Prescrire une solution</span>
+                        <a href="#search" class="btn btn-primary btn-ico"
+                           data-bs-toggle="tab" role="tab" aria-controls="search">
+                            <i class="ri-search-line fw-medium" aria-hidden="true"></i>
+                            <span>Rechercher un service ou une solution</span>
                         </a>
                     </div>
                 </div>
@@ -45,9 +46,15 @@
                         </a>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <a class="nav-link" id="prescriptions-tab" data-bs-toggle="tab" href="#prescriptions"
-                           role="tab" aria-controls="prescriptions" aria-selected="false">
-                            Prescriptions{% if prescriptions %} ({{ prescriptions|length }}){% endif %}
+                        <a class="nav-link" id="solutions-tab" data-bs-toggle="tab" href="#solutions"
+                           role="tab" aria-controls="solutions" aria-selected="false">
+                            Solutions recommandées{% if results.recommended %} ({{ results.recommended|length }}){% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="search-tab" data-bs-toggle="tab" href="#search"
+                           role="tab" aria-controls="search" aria-selected="false">
+                            Rechercher
                         </a>
                     </li>
                 </ul>
@@ -59,16 +66,311 @@
 <section class="s-section">
     <div class="s-section__container container">
         <div class="tab-content">
+            {# ── Tab 1: Informations générales ── #}
             <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
                 {% include "includes/general_info.html" %}
             </div>
+
+            {# ── Tab 2: Diagnostic ── #}
             <div class="tab-pane fade" id="diagnostic" role="tabpanel" aria-labelledby="diagnostic-tab">
                 {% include "includes/diagnostic.html" %}
             </div>
-            <div class="tab-pane fade" id="prescriptions" role="tabpanel" aria-labelledby="prescriptions-tab">
-                {% include "includes/prescriptions.html" %}
+
+            {# ── Tab 3: Solutions recommandées ── #}
+            <div class="tab-pane fade" id="solutions" role="tabpanel" aria-labelledby="solutions-tab">
+                <div class="s-section__row row">
+                    <div class="s-section__col col-12">
+
+                        {# D'où on part #}
+                        <div class="alert alert-info mb-3 mb-md-4">
+                            <i class="ri-information-line fw-medium" aria-hidden="true"></i>
+                            {% if b.modalite %}
+                            Modalité actuelle : <strong>{{ b.modalite }}</strong>
+                            {% elif structure %}
+                            Structure référente : <strong>{{ structure.name }} ({{ structure.type_acronym }})</strong>
+                            {% else %}
+                            Aucune modalité ou structure référente
+                            {% endif %}
+                        </div>
+
+                        {# Recommendations #}
+                        {% if results.recommended %}
+                        <h2 class="h5 mb-3">
+                            <i class="ri-star-line fw-medium text-warning" aria-hidden="true"></i>
+                            Recommandations
+                        </h2>
+                        <div class="row">
+                            {% for s in results.recommended %}
+                            <div class="col-12 col-md-6 mb-3">
+                                <div class="c-box h-100">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h3 class="h6 mb-0">
+                                            {{ s.structure_name or s.name }}
+                                            <span class="badge rounded-pill badge-sm bg-info ms-1">{{ s.type_label }}</span>
+                                        </h3>
+                                        {% if s.places_disponibles > 0 %}
+                                        <span class="badge rounded-pill badge-sm bg-success flex-shrink-0">{{ s.places_disponibles }} places</span>
+                                        {% else %}
+                                        <span class="badge rounded-pill badge-sm bg-danger flex-shrink-0">Saturé</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if s.commune %}
+                                    <p class="text-muted fs-sm mb-1">
+                                        <i class="ri-map-pin-line fw-medium" aria-hidden="true"></i>
+                                        {{ s.commune }}
+                                    </p>
+                                    {% endif %}
+                                    {% if s.conditions_admission %}
+                                    <p class="fs-sm mb-1">
+                                        <i class="ri-checkbox-circle-line fw-medium text-success" aria-hidden="true"></i>
+                                        {{ s.conditions_admission }}
+                                    </p>
+                                    {% endif %}
+                                    {% if s.description %}
+                                    <p class="fs-sm text-muted mb-2">{{ s.description[:100] }}{% if s.description|length > 100 %}...{% endif %}</p>
+                                    {% endif %}
+                                    <div class="d-flex gap-2">
+                                        <a href="/solution/{{ s.id }}?from={{ b.id }}" class="btn btn-outline-primary btn-sm btn-ico">
+                                            <span>Voir le détail</span>
+                                            <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-primary btn-sm btn-ico prescribe-btn"
+                                                data-bs-toggle="modal" data-bs-target="#prescribeModal"
+                                                data-beneficiary-id="{{ b.id }}"
+                                                data-solution-id="{{ s.id }}"
+                                                data-solution-name="{{ s.name }}"
+                                                data-solution-type="{{ s.type_label }}">
+                                            <i class="ri-send-plane-line fw-medium" aria-hidden="true"></i>
+                                            <span>Prescrire</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="c-box mb-3 mb-md-4">
+                            <p class="text-muted mb-0">Aucune recommandation disponible pour ce profil.</p>
+                        </div>
+                        {% endif %}
+
+                        {# Prescriptions déjà envoyées #}
+                        {% if prescriptions %}
+                        <hr class="my-4">
+                        <h2 class="h5 mb-3">Prescriptions envoyées</h2>
+                        {% for p in prescriptions %}
+                        <a href="/prescription/{{ p.id }}" class="c-box mb-3 d-block text-decoration-none">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h4 class="h6 mb-0">
+                                    {% if p._solution %}
+                                    {{ p._solution.name }}
+                                    <span class="badge rounded-pill badge-sm bg-info-lighter text-info">{{ p._solution.type_label }}</span>
+                                    {% endif %}
+                                </h4>
+                                {% set status_info = prescription_status_labels.get(p.status, ("Inconnu", "bg-secondary")) %}
+                                <span class="badge rounded-pill text-nowrap badge-sm {{ status_info[1] }}">{{ status_info[0] }}</span>
+                            </div>
+                            <p class="text-muted fs-sm mb-0">
+                                <i class="ri-calendar-line fw-medium" aria-hidden="true"></i>
+                                {{ p.created_at|format_datetime }}
+                            </p>
+                        </a>
+                        {% endfor %}
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+
+            {# ── Tab 4: Rechercher un service ou une solution ── #}
+            {% set category_icons = {
+                "Mobilité": "ri-car-line",
+                "Numérique": "ri-computer-line",
+                "Formation": "ri-book-open-line",
+                "Emploi": "ri-briefcase-line",
+                "Démarches administratives": "ri-file-text-line",
+                "Santé": "ri-heart-pulse-line",
+                "Logement": "ri-home-4-line",
+                "Famille et parentalité": "ri-parent-line",
+                "Remobilisation": "ri-mental-health-line",
+                "Français et compétences de base": "ri-translate-2",
+            } %}
+            <div class="tab-pane fade" id="search" role="tabpanel" aria-labelledby="search-tab">
+                <div class="s-section__row row">
+                    <div class="s-section__col col-12">
+                        {# Search bar + filters #}
+                        <div class="c-box mb-3 mb-md-4">
+                            <div class="d-flex gap-2 align-items-center mb-3">
+                                <input type="text" class="form-control" placeholder="Rechercher un service, une structure..." disabled>
+                                <div class="btn-dropdown-filter-group d-flex gap-2 flex-shrink-0">
+                                    <button class="btn btn-dropdown-filter" disabled>Employeurs (SIAE)</button>
+                                    <button class="btn btn-dropdown-filter" disabled>Services d'insertion</button>
+                                    <button class="btn btn-dropdown-filter" disabled>Solutions de parcours</button>
+                                </div>
+                            </div>
+                            <p class="text-muted fs-sm mb-0">
+                                <i class="ri-information-line fw-medium" aria-hidden="true"></i>
+                                Moteur de recherche — fonctionnalité à venir. Les résultats ci-dessous sont filtrés par proximité.
+                            </p>
+                        </div>
+
+                        {# Employeurs #}
+                        {% if results.employeurs %}
+                        <h3 class="h6 mb-3">
+                            <i class="ri-building-line fw-medium" aria-hidden="true"></i>
+                            Employeurs inclusifs (SIAE et GEIQ)
+                            <span class="text-muted fs-sm fw-normal ms-1">({{ results.employeurs|length }})</span>
+                        </h3>
+                        <div class="c-box mb-3 mb-md-4">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Structure</th>
+                                            <th>Type</th>
+                                            <th>Commune</th>
+                                            <th>Places</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for s in results.employeurs %}
+                                        <tr class="align-middle">
+                                            <td class="fw-medium">{{ s.name }}</td>
+                                            <td><span class="badge rounded-pill badge-sm bg-info-lighter text-info">{{ s.type_label }}</span></td>
+                                            <td>{{ s.commune or "—" }}</td>
+                                            <td>
+                                                {% if s.places_disponibles > 0 %}
+                                                <span class="badge rounded-pill badge-sm bg-success-lighter text-success">{{ s.places_disponibles }} places</span>
+                                                {% else %}
+                                                <span class="badge rounded-pill badge-sm bg-danger-lighter text-danger">Saturé</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <a href="/solution/{{ s.id }}?from={{ b.id }}" class="btn btn-link btn-ico btn-sm">
+                                                    <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {# Services d'insertion grouped by category #}
+                        {% if services_grouped %}
+                        {% for category_label, svc_list in services_grouped.items() %}
+                        <h3 class="h6 mb-3">
+                            <i class="{{ category_icons.get(category_label, 'ri-service-line') }} fw-medium" aria-hidden="true"></i>
+                            {{ category_label }}
+                            <span class="text-muted fs-sm fw-normal ms-1">({{ svc_list|length }})</span>
+                        </h3>
+                        {% for s in svc_list %}
+                        <div class="c-box mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h4 class="h6 mb-1">{{ s.name }}</h4>
+                                    {% if s.structure_name %}
+                                    <p class="text-muted fs-sm mb-1">
+                                        <i class="ri-building-line fw-medium" aria-hidden="true"></i>
+                                        {{ s.structure_name }}
+                                    </p>
+                                    {% endif %}
+                                    {% if s.commune %}
+                                    <p class="text-muted fs-sm mb-1">
+                                        <i class="ri-map-pin-line fw-medium" aria-hidden="true"></i>
+                                        {{ s.commune }}{% if s.code_postal %} ({{ s.code_postal }}){% endif %}
+                                    </p>
+                                    {% endif %}
+                                    {% if s.description %}
+                                    <p class="fs-sm mb-0">{{ s.description[:120] }}{% if s.description|length > 120 %}...{% endif %}</p>
+                                    {% endif %}
+                                </div>
+                                <a href="#" class="btn btn-outline-primary btn-sm btn-ico ms-3 flex-shrink-0">
+                                    <span>Voir</span>
+                                    <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endfor %}
+                        {% endif %}
+
+                        {# Solutions de parcours #}
+                        {% if results.parcours %}
+                        <h3 class="h6 mb-3">
+                            <i class="ri-compass-line fw-medium" aria-hidden="true"></i>
+                            Solutions de parcours
+                            <span class="text-muted fs-sm fw-normal ms-1">({{ results.parcours|length }})</span>
+                        </h3>
+                        {% for s in results.parcours %}
+                        <div class="c-box mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h4 class="h6 mb-1">
+                                        {{ s.structure_name or s.name }}
+                                        <span class="badge rounded-pill badge-sm bg-info-lighter text-info">{{ s.type_label }}</span>
+                                    </h4>
+                                    {% if s.commune %}
+                                    <p class="text-muted fs-sm mb-1">
+                                        <i class="ri-map-pin-line fw-medium" aria-hidden="true"></i>
+                                        {{ s.commune }}
+                                    </p>
+                                    {% endif %}
+                                    {% if s.description %}
+                                    <p class="fs-sm mb-0">{{ s.description[:120] }}{% if s.description|length > 120 %}...{% endif %}</p>
+                                    {% endif %}
+                                </div>
+                                <a href="/solution/{{ s.id }}?from={{ b.id }}" class="btn btn-outline-primary btn-sm btn-ico ms-3 flex-shrink-0">
+                                    <span>Voir</span>
+                                    <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
+
+{# Prescribe modal #}
+<div class="modal fade" id="prescribeModal" tabindex="-1" aria-labelledby="prescribeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" id="prescribeForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="prescribeModalLabel">Prescrire une solution</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="fw-medium mb-3" id="prescribeModalSolutionName"></p>
+                    <div class="form-group">
+                        <label class="form-label" for="prescribeMessage">Motif de la prescription</label>
+                        <textarea name="message" id="prescribeMessage" rows="4" class="form-control"
+                                  placeholder="Expliquez pourquoi cette solution est adaptée..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Envoyer la prescription</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.prescribe-btn');
+    if (!btn) return;
+    var form = document.getElementById('prescribeForm');
+    form.action = '/beneficiary/' + btn.dataset.beneficiaryId + '/prescribe/' + btn.dataset.solutionId;
+    document.getElementById('prescribeModalSolutionName').textContent = btn.dataset.solutionName + ' (' + btn.dataset.solutionType + ')';
+});
+</script>
 {% endblock %}

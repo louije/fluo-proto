@@ -65,16 +65,23 @@ async def detail_beneficiary(request: Request, id: int):
             else:
                 referent._structure = None
         diagnostic = json.loads(b.diagnostic_data) if b.diagnostic_data else None
+        # Prescriptions for this person
         prescriptions = session.exec(
             select(Prescription).where(Prescription.beneficiary_id == id).order_by(Prescription.created_at.desc())
         ).all()
-        solution_ids = [p.solution_id for p in prescriptions]
-        solutions_map = {}
-        if solution_ids:
-            for s in session.exec(select(Solution).where(Solution.id.in_(solution_ids))).all():
-                solutions_map[s.id] = s
+        prescription_solution_ids = [p.solution_id for p in prescriptions]
+        prescription_solutions_map = {}
+        if prescription_solution_ids:
+            for s in session.exec(select(Solution).where(Solution.id.in_(prescription_solution_ids))).all():
+                prescription_solutions_map[s.id] = s
         for p in prescriptions:
-            p._solution = solutions_map.get(p.solution_id)
+            p._solution = prescription_solutions_map.get(p.solution_id)
+        # Solutions recommendations
+        all_solutions = session.exec(select(Solution)).all()
+        results = compute_recommendations(b, all_solutions)
+        # Services grouped by category
+        all_services = session.exec(select(Service)).all()
+        services_grouped = get_services_for_beneficiary(b, all_services)
     return _templates(request).TemplateResponse(
         "beneficiary_detail.html",
         {
@@ -84,29 +91,6 @@ async def detail_beneficiary(request: Request, id: int):
             "referent": referent,
             "diagnostic": diagnostic,
             "prescriptions": prescriptions,
-        },
-    )
-
-
-@router.get("/beneficiary/{id}/recommendations", response_class=HTMLResponse)
-async def recommendations(request: Request, id: int):
-    with Session(engine) as session:
-        b = session.get(Beneficiary, id)
-        if not b:
-            return HTMLResponse("Not found", status_code=404)
-        structure = None
-        if b.structure_referente_id:
-            structure = session.get(Structure, b.structure_referente_id)
-        solutions = session.exec(select(Solution)).all()
-        results = compute_recommendations(b, solutions)
-        all_services = session.exec(select(Service)).all()
-        services_grouped = get_services_for_beneficiary(b, all_services)
-    return _templates(request).TemplateResponse(
-        "recommendations.html",
-        {
-            "request": request,
-            "b": b,
-            "structure": structure,
             "results": results,
             "services_grouped": services_grouped,
         },
