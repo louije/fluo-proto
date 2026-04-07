@@ -27,6 +27,9 @@ LILLE_METRO = {
     "wambrechies",
 }
 
+# Solutions that require travel but are still reachable from Lille metro
+LILLE_REACHABLE = LILLE_METRO | {"cambrai", "douai", "lens", "arras"}
+
 
 def _compute_age(birthdate_str: str | None) -> int | None:
     if not birthdate_str:
@@ -108,8 +111,8 @@ def _is_nearby(beneficiary: Beneficiary, solution: Solution) -> bool:
     if person_city_lower == solution_commune_lower:
         return True
 
-    # Both in Lille metro
-    if person_city_lower in LILLE_METRO and solution_commune_lower in LILLE_METRO:
+    # Both in Lille metro or reachable area
+    if person_city_lower in LILLE_METRO and solution_commune_lower in LILLE_REACHABLE:
         return True
 
     return False
@@ -246,9 +249,27 @@ def compute_recommendations(beneficiary: Beneficiary, solutions: list[Solution])
         if label not in by_type:
             by_type[label] = []
         by_type[label].append(s)
-    # Sort each group: available spots desc, then by name
+    # Sort each group: relevance to person's project first, then available spots
+    diagnostic = json.loads(beneficiary.diagnostic_data) if beneficiary.diagnostic_data else {}
+    projet_metier = ""
+    if diagnostic.get("besoinsParDiagnostic"):
+        diag = diagnostic["besoinsParDiagnostic"][0].get("diagnostic", {})
+        projet_metier = (diag.get("nomMetier") or "").lower()
+
+    def _relevance(s: Solution) -> tuple:
+        desc = ((s.description or "") + " " + (s.name or "")).lower()
+        projet_words = [w for w in projet_metier.split() if len(w) > 3]
+        keyword_match = sum(1 for w in projet_words if w in desc)
+        # If no project defined, boost "remobilisation" / "projet professionnel" solutions
+        if not projet_metier and ("remobilisation" in desc or "projet professionnel" in desc):
+            keyword_match = 1
+        person_city = _person_city(beneficiary)
+        same_city = 1 if person_city and s.commune and person_city.lower() == s.commune.lower() else 0
+        available = 1 if s.places_disponibles > 0 else 0
+        return (-keyword_match, -same_city, -available, s.name)
+
     for label in by_type:
-        by_type[label].sort(key=lambda s: (-s.places_disponibles, s.name))
+        by_type[label].sort(key=_relevance)
 
     return {
         "recommended": recommended,
