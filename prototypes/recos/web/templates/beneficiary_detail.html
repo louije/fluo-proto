@@ -128,8 +128,14 @@
                         {% set best = solutions_list[0] %}
                         {% set others_count = solutions_list|length - 1 %}
                         <div class="c-box p-0 mb-3 mb-md-4">
-                            <div class="px-3 px-lg-4 py-2 border-bottom">
+                            <div class="px-3 px-lg-4 py-2 border-bottom d-flex justify-content-between align-items-center">
                                 <span class="h4 mb-0">{{ type_label }}</span>
+                                {% if others_count > 0 %}
+                                <a href="#search" class="btn-link btn-ico fs-sm flex-shrink-0" data-bs-toggle="tab" role="tab">
+                                    <span>{{ others_count }} autre{{ "s" if others_count > 1 }}</span>
+                                    <i class="ri-arrow-right-s-line fw-medium" aria-hidden="true"></i>
+                                </a>
+                                {% endif %}
                             </div>
                             <div class="p-3 p-lg-4">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
@@ -154,7 +160,7 @@
 
                                 {# Why this is recommended — links to diagnostic signals #}
                                 {% if ns_diag_besoins.items or ns_diag_contraintes.items %}
-                                <div class="mb-3">
+                                <div class="mb-0">
                                     <p class="fs-sm fw-bold mb-1">Pourquoi cette recommandation</p>
                                     <div class="d-flex flex-wrap gap-1">
                                         {% for besoin in ns_diag_besoins.items[:3] %}
@@ -166,32 +172,23 @@
                                     </div>
                                 </div>
                                 {% endif %}
-
-                                <div class="d-flex gap-2 mb-3">
-                                    <a href="/solution/{{ best.id }}?from={{ b.id }}" class="btn btn-outline-primary btn-sm btn-ico">
-                                        <i class="ri-eye-line fw-medium" aria-hidden="true"></i>
-                                        <span>Voir le détail</span>
-                                    </a>
-                                    <button type="button" class="btn btn-primary btn-sm btn-ico prescribe-btn"
-                                            data-bs-toggle="modal" data-bs-target="#prescribeModal"
-                                            data-beneficiary-id="{{ b.id }}"
-                                            data-solution-id="{{ best.id }}"
-                                            data-solution-name="{{ best.name }}"
-                                            data-solution-type="{{ best.type_label }}">
-                                        <i class="ri-send-plane-line fw-medium" aria-hidden="true"></i>
-                                        <span>Prescrire</span>
-                                    </button>
-                                </div>
                             </div>
 
-                            {% if others_count > 0 %}
-                            <div class="border-top px-3 px-lg-4 py-3">
-                                <a href="#search" class="btn-link btn-ico fs-sm" data-bs-toggle="tab" role="tab">
-                                    <span>Consulter {{ others_count }} autre{{ "s" if others_count > 1 }} solution{{ "s" if others_count > 1 }} de ce type</span>
-                                    <i class="ri-arrow-right-s-line fw-medium" aria-hidden="true"></i>
+                            <div class="border-top px-3 px-lg-4 py-2 d-flex justify-content-end gap-2">
+                                <a href="/solution/{{ best.id }}?from={{ b.id }}" class="btn btn-outline-primary btn-sm btn-ico">
+                                    <i class="ri-eye-line fw-medium" aria-hidden="true"></i>
+                                    <span>Voir le détail</span>
                                 </a>
+                                <button type="button" class="btn btn-primary btn-sm btn-ico prescribe-btn"
+                                        data-bs-toggle="modal" data-bs-target="#prescribeModal"
+                                        data-beneficiary-id="{{ b.id }}"
+                                        data-solution-id="{{ best.id }}"
+                                        data-solution-name="{{ best.name }}"
+                                        data-solution-type="{{ best.type_label }}">
+                                    <i class="ri-send-plane-line fw-medium" aria-hidden="true"></i>
+                                    <span>Prescrire</span>
+                                </button>
                             </div>
-                            {% endif %}
                         </div>
                         {% endfor %}
                         {% else %}
