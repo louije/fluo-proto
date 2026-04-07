@@ -182,19 +182,23 @@ def compute_recommendations(beneficiary: Beneficiary, solutions: list[Solution])
     employeurs = [s for s in matched if s.solution_type in employeur_types]
     parcours = [s for s in matched if s.solution_type in parcours_types]
 
-    # Filter modalités FT: only keep if different from person's current modalité
-    current_modalite = beneficiary.modalite  # e.g. "Guidé"
+    # Modalités FT: only show when person already has a FT modalité (suggesting a change).
+    # If they have a structure référente or nothing, don't recommend modalités.
+    current_modalite = beneficiary.modalite  # e.g. "Guidé", or None
     if current_modalite:
-        # Remove modalité FT that matches the person's current one
+        # Keep modalités FT that are different from the current one
         parcours = [
             s for s in parcours if s.solution_type != "modalite_ft" or current_modalite.lower() not in s.name.lower()
         ]
+    else:
+        # No current modalité → remove all modalités FT
+        parcours = [s for s in parcours if s.solution_type != "modalite_ft"]
 
     # Build recommended list: prioritize solutions with available places
     available = [s for s in matched if s.places_disponibles > 0]
     saturated = [s for s in matched if s.places_disponibles == 0]
 
-    # Also filter modalités from recommended list
+    # Apply same modalité filter to candidates
     all_candidates = available + saturated
     if current_modalite:
         all_candidates = [
@@ -202,6 +206,8 @@ def compute_recommendations(beneficiary: Beneficiary, solutions: list[Solution])
             for s in all_candidates
             if s.solution_type != "modalite_ft" or current_modalite.lower() not in s.name.lower()
         ]
+    else:
+        all_candidates = [s for s in all_candidates if s.solution_type != "modalite_ft"]
 
     # At most 1 modalité FT in recommended
     recommended = []
