@@ -48,7 +48,10 @@
                     <li class="nav-item" role="presentation">
                         <a class="nav-link" id="solutions-tab" data-bs-toggle="tab" href="#solutions"
                            role="tab" aria-controls="solutions" aria-selected="false">
-                            Solutions recommandées{% if results.recommended %} ({{ results.recommended|length }}){% endif %}
+                            Solutions recommandées
+                            {% if results.recommended %}
+                            <span class="badge rounded-pill bg-info ms-1">{{ results.recommended|length }}</span>
+                            {% endif %}
                         </a>
                     </li>
                     <li class="nav-item" role="presentation">
