@@ -418,5 +418,26 @@ document.addEventListener('click', function(e) {
     form.action = '/beneficiary/' + btn.dataset.beneficiaryId + '/prescribe/' + btn.dataset.solutionId;
     document.getElementById('prescribeModalSolutionName').textContent = btn.dataset.solutionName + ' (' + btn.dataset.solutionType + ')';
 });
+
+// Restore active tab from URL hash on page load
+(function() {
+    var hash = window.location.hash;
+    if (hash) {
+        var tab = document.querySelector('.nav-link[href="' + hash + '"]');
+        if (tab) {
+            var bsTab = new bootstrap.Tab(tab);
+            bsTab.show();
+        }
+    }
+    // Update hash when switching tabs
+    document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function(el) {
+        el.addEventListener('shown.bs.tab', function(e) {
+            var href = e.target.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                history.replaceState(null, null, href);
+            }
+        });
+    });
+})();
 </script>
 {% endblock %}
