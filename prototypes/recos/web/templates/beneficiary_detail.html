@@ -47,7 +47,7 @@
                     <li class="nav-item" role="presentation">
                         <a class="nav-link" id="prescriptions-tab" data-bs-toggle="tab" href="#prescriptions"
                            role="tab" aria-controls="prescriptions" aria-selected="false">
-                            Prescriptions
+                            Prescriptions{% if prescriptions %} ({{ prescriptions|length }}){% endif %}
                         </a>
                     </li>
                 </ul>

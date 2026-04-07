@@ -5,7 +5,7 @@ from pathlib import Path
 from sqlmodel import Session
 
 from .database import engine, init_db
-from .models import Beneficiary, Professional, Service, Solution, Structure
+from .models import Beneficiary, Prescription, Professional, Service, Solution, Structure  # noqa: F401
 
 _data_dir = Path(__file__).parent.parent / "data"
 

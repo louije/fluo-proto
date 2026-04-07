@@ -1,6 +1,15 @@
 from sqlmodel import Field, SQLModel
 
 
+class Prescription(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    beneficiary_id: int = Field(foreign_key="beneficiary.id")
+    solution_id: int = Field(foreign_key="solution.id")
+    message: str | None = None
+    status: str = Field(default="en_attente")
+    created_at: str
+
+
 class Service(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str

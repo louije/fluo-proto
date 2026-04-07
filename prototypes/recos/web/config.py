@@ -44,6 +44,12 @@ NAV_ITEMS = [
     },
 ]
 
+PRESCRIPTION_STATUS_LABELS = {
+    "en_attente": ("En attente", "bg-warning-lighter text-warning"),
+    "acceptee": ("Acceptée", "bg-success-lighter text-success"),
+    "refusee": ("Refusée", "bg-danger-lighter text-danger"),
+}
+
 TAG_COLORS = {
     "POINT_FORT": ("Point fort", "bg-success"),
     "BESOIN": ("Besoin", "bg-info"),

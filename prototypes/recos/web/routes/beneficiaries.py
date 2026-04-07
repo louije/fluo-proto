@@ -1,12 +1,13 @@
 import json
+from datetime import datetime
 
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Form, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlmodel import Session, select
 
 from ..database import engine
 from ..matching import compute_recommendations, get_services_for_beneficiary
-from ..models import Beneficiary, Professional, Service, Solution, Structure
+from ..models import Beneficiary, Prescription, Professional, Service, Solution, Structure
 
 router = APIRouter()
 
@@ -64,6 +65,16 @@ async def detail_beneficiary(request: Request, id: int):
             else:
                 referent._structure = None
         diagnostic = json.loads(b.diagnostic_data) if b.diagnostic_data else None
+        prescriptions = session.exec(
+            select(Prescription).where(Prescription.beneficiary_id == id).order_by(Prescription.created_at.desc())
+        ).all()
+        solution_ids = [p.solution_id for p in prescriptions]
+        solutions_map = {}
+        if solution_ids:
+            for s in session.exec(select(Solution).where(Solution.id.in_(solution_ids))).all():
+                solutions_map[s.id] = s
+        for p in prescriptions:
+            p._solution = solutions_map.get(p.solution_id)
     return _templates(request).TemplateResponse(
         "beneficiary_detail.html",
         {
@@ -72,6 +83,7 @@ async def detail_beneficiary(request: Request, id: int):
             "structure": structure,
             "referent": referent,
             "diagnostic": diagnostic,
+            "prescriptions": prescriptions,
         },
     )
 
@@ -117,5 +129,50 @@ async def solution_detail(request: Request, id: int):
             "request": request,
             "solution": solution,
             "b": beneficiary,
+        },
+    )
+
+
+@router.post("/beneficiary/{beneficiary_id}/prescribe/{solution_id}")
+async def prescribe(beneficiary_id: int, solution_id: int, message: str = Form("")):
+    with Session(engine) as session:
+        b = session.get(Beneficiary, beneficiary_id)
+        s = session.get(Solution, solution_id)
+        if not b or not s:
+            return HTMLResponse("Not found", status_code=404)
+        p = Prescription(
+            beneficiary_id=beneficiary_id,
+            solution_id=solution_id,
+            message=message or None,
+            created_at=datetime.now().isoformat(),
+        )
+        session.add(p)
+        b.nb_prescriptions += 1
+        session.commit()
+    return RedirectResponse("/prescriptions-sent", status_code=303)
+
+
+@router.get("/prescriptions-sent", response_class=HTMLResponse)
+async def prescriptions_sent(request: Request):
+    with Session(engine) as session:
+        prescriptions = session.exec(select(Prescription).order_by(Prescription.created_at.desc())).all()
+        beneficiary_ids = {p.beneficiary_id for p in prescriptions}
+        solution_ids = {p.solution_id for p in prescriptions}
+        beneficiaries_map = {}
+        if beneficiary_ids:
+            for b in session.exec(select(Beneficiary).where(Beneficiary.id.in_(beneficiary_ids))).all():
+                beneficiaries_map[b.id] = b
+        solutions_map = {}
+        if solution_ids:
+            for s in session.exec(select(Solution).where(Solution.id.in_(solution_ids))).all():
+                solutions_map[s.id] = s
+        for p in prescriptions:
+            p._beneficiary = beneficiaries_map.get(p.beneficiary_id)
+            p._solution = solutions_map.get(p.solution_id)
+    return _templates(request).TemplateResponse(
+        "prescriptions_sent.html",
+        {
+            "request": request,
+            "prescriptions": prescriptions,
         },
     )

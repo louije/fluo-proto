@@ -42,10 +42,22 @@
                         </h1>
                     </div>
                     <div class="c-title__actions d-flex gap-2">
+                        {% if b %}
+                        <button type="button" class="btn btn-primary btn-ico prescribe-btn"
+                                data-bs-toggle="modal" data-bs-target="#prescribeModal"
+                                data-beneficiary-id="{{ b.id }}"
+                                data-solution-id="{{ solution.id }}"
+                                data-solution-name="{{ solution.name }}"
+                                data-solution-type="{{ solution.type_label }}">
+                            <i class="ri-send-plane-line fw-medium" aria-hidden="true"></i>
+                            <span>Prescrire cette solution</span>
+                        </button>
+                        {% else %}
                         <button class="btn btn-primary btn-ico" disabled>
                             <i class="ri-compass-line fw-medium" aria-hidden="true"></i>
                             <span>Prescrire cette solution</span>
                         </button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -140,4 +152,39 @@
         </div>
     </div>
 </section>
+{% if b %}
+<div class="modal fade" id="prescribeModal" tabindex="-1" aria-labelledby="prescribeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" id="prescribeForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="prescribeModalLabel">Prescrire une solution</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="fw-medium mb-3" id="prescribeModalSolutionName"></p>
+                    <div class="form-group">
+                        <label class="form-label" for="prescribeMessage">Motif de la prescription</label>
+                        <textarea name="message" id="prescribeMessage" rows="4" class="form-control"
+                                  placeholder="Expliquez pourquoi cette solution est adaptée..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Envoyer la prescription</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.prescribe-btn');
+    if (!btn) return;
+    var form = document.getElementById('prescribeForm');
+    form.action = '/beneficiary/' + btn.dataset.beneficiaryId + '/prescribe/' + btn.dataset.solutionId;
+    document.getElementById('prescribeModalSolutionName').textContent = btn.dataset.solutionName + ' (' + btn.dataset.solutionType + ')';
+});
+</script>
+{% endif %}
 {% endblock %}

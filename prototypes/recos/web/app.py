@@ -9,6 +9,7 @@ from .config import (
     ELIGIBILITY_COLORS,
     MODALITE_LABELS,
     NAV_ITEMS,
+    PRESCRIPTION_STATUS_LABELS,
     SERVICE_NAME,
     TAG_COLORS,
 )
@@ -28,6 +29,7 @@ templates.env.globals.update(
         "eligibility_colors": ELIGIBILITY_COLORS,
         "nav_items": NAV_ITEMS,
         "tag_colors": TAG_COLORS,
+        "prescription_status_labels": PRESCRIPTION_STATUS_LABELS,
     }
 )
 templates.env.filters["format_datetime"] = lambda v: v[:16].replace("T", " à ") if v else ""
