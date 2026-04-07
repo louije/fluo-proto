@@ -174,7 +174,7 @@
                                 {% endif %}
                             </div>
 
-                            <div class="border-top px-3 px-lg-4 py-2 d-flex justify-content-end gap-2">
+                            <div class="border-top px-3 px-lg-4 py-3 d-flex justify-content-end gap-2">
                                 <a href="/solution/{{ best.id }}?from={{ b.id }}" class="btn btn-outline-primary btn-sm btn-ico">
                                     <i class="ri-eye-line fw-medium" aria-hidden="true"></i>
                                     <span>Voir le détail</span>
@@ -417,17 +417,17 @@ document.addEventListener('click', function(e) {
 });
 
 // Restore active tab from URL hash on page load
-(function() {
+window.addEventListener('load', function() {
     var hash = window.location.hash;
     if (hash) {
-        var tab = document.querySelector('.nav-link[href="' + hash + '"]');
+        var tab = document.querySelector('.s-tabs-01__nav .nav-link[href="' + hash + '"]');
         if (tab) {
             var bsTab = new bootstrap.Tab(tab);
             bsTab.show();
         }
     }
     // Update hash when switching tabs
-    document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function(el) {
+    document.querySelectorAll('.s-tabs-01__nav [data-bs-toggle="tab"]').forEach(function(el) {
         el.addEventListener('shown.bs.tab', function(e) {
             var href = e.target.getAttribute('href');
             if (href && href.startsWith('#')) {
@@ -435,6 +435,6 @@ document.addEventListener('click', function(e) {
             }
         });
     });
-})();
+});
 </script>
 {% endblock %}
