@@ -1,299 +1,273 @@
-{# Diagnostic socio-professionnel — dense, glanceable rendering.
-   Ported from explorations-nova/diags/build.ts.
-   Skips empty sections. Uses c-box + list-data + bold text (not badges). #}
+{# Diagnostic socio-professionnel — readable, color-coded, single column.
+   Sections: Parcours, Projet, Contraintes & besoins, Points forts, Numérique. #}
 
-{% macro render_value(value) %}
-    {% if value and value in tag_colors %}
-        {% set label, _css = tag_colors[value] %}
-        <strong>{{ label }}</strong>
-    {% elif value %}
-        <strong>{{ value }}</strong>
-    {% endif %}
+{% macro dot(color, text) %}
+<div class="d-flex align-items-center gap-2 mb-1">
+    <i class="ri-circle-fill text-{{ color }} flex-shrink-0" style="font-size: 0.6rem;" aria-hidden="true"></i>
+    <span class="fs-sm">{{ text }}</span>
+</div>
 {% endmacro %}
 
-{% macro render_agent(agent, date) %}
-    {% if agent or date %}
-    <div class="text-muted fs-sm mt-1">
-        {% if date %}Exploré le {{ date[:10] }}{% endif %}
-        {% if agent %}
-            {% if date %} par {% endif %}
-            {{ agent.prenom or "" }} {{ agent.nom or "" }}
-            {% if agent.structure %}<span class="text-muted"> — {{ agent.structure }}</span>{% endif %}
-        {% endif %}
-    </div>
-    {% endif %}
+{% macro agent_line(agent, date) %}
+{% if agent or date %}
+<p class="text-muted fs-xs mt-2 mb-0">
+    {% if date %}Exploré le {{ date[:10] }}{% endif %}
+    {% if agent %}{% if date %} par {% endif %}{{ agent.prenom or "" }} {{ agent.nom or "" }}{% if agent.structure %} — {{ agent.structure }}{% endif %}{% endif %}
+</p>
+{% endif %}
 {% endmacro %}
 
 <div class="s-section__row row">
-    <div class="s-section__col col-12">
+    <div class="s-section__col col-12 col-xxl-8">
         {% if not diagnostic %}
         <div class="c-box mb-3 mb-md-4">
             <p class="text-muted mb-0">Aucun diagnostic disponible.</p>
         </div>
         {% else %}
-        <div class="row">
+
+        {# ── Parcours et contexte ── #}
+        {% set ex = diagnostic.extra if diagnostic.extra is defined else {} %}
+        {% set ms = ex.modaliteSuivi if ex.modaliteSuivi is defined else none %}
+        {% set iae = ex.insertionActiviteEconomique if ex.insertionActiviteEconomique is defined else none %}
+        {% set ofii = ex.ofii if ex.ofii is defined else none %}
+        {% set decl_orient = ex.declarationsOrientation if ex.declarationsOrientation is defined else none %}
+        {% set info_decl = ex.informationsDeclarees if ex.informationsDeclarees is defined else none %}
+
+        {% set ns_parcours = namespace(has_content=false) %}
+        {% if ms or iae or ofii or decl_orient or info_decl %}
+            {% set ns_parcours.has_content = true %}
+        {% endif %}
+
+        {% if ns_parcours.has_content %}
+        <div class="c-box mb-3 mb-md-4">
+            <h3>
+                <i class="ri-route-line fw-medium" aria-hidden="true"></i>
+                Parcours
+            </h3>
+
+            {% if ms and ms.modaliteEnCours %}
+            {{ dot("info", "Modalité " + ms.modaliteEnCours + " depuis le " + ms.dateEnregistrement[:10]) }}
+            {% endif %}
+
+            {% if iae %}
+            {% if iae.dateEnregistrement %}
+            {{ dot("secondary", "Inscrit depuis " + iae.dateEnregistrement[:10]) }}
+            {% endif %}
+            {% if iae.statut %}
+            {{ dot("secondary", iae.statut) }}
+            {% endif %}
+            {% endif %}
+
+            {% if ofii %}
+            {% if ofii.beneficiaireCIR %}
+            {{ dot("info", "Bénéficiaire du Contrat d'Intégration Républicaine") }}
+            {% endif %}
+            {% if ofii.beneficiaireProtectionInternationale %}
+            {{ dot("info", "Bénéficiaire de la protection internationale") }}
+            {% endif %}
+            {% if ofii.niveauFLE %}
+            {{ dot("warning", "Niveau FLE : " + ofii.niveauFLE) }}
+            {% endif %}
+            {% endif %}
+
+            {% if decl_orient %}
+            {% if decl_orient.elements %}
+            {% for el in decl_orient.elements %}
+            {{ dot("info", el) }}
+            {% endfor %}
+            {% endif %}
+            {% if decl_orient.santeDeclare %}
+            {{ dot("warning", decl_orient.santeDeclare) }}
+            {% endif %}
+            {% if decl_orient.date %}
+            <p class="text-muted fs-xs mt-2 mb-0">Déclaration du {{ decl_orient.date[:10] }}</p>
+            {% endif %}
+            {% endif %}
+
+            {% if info_decl %}
+            <hr class="my-2">
+            {% if info_decl is iterable and info_decl is not string and info_decl is not mapping %}
+            {% for info in info_decl %}
+            {% if info.contenu %}
+            {{ dot("secondary", info.contenu) }}
+            {% endif %}
+            {% endfor %}
+            {% elif info_decl is mapping and info_decl.contenu %}
+            {{ dot("secondary", info_decl.contenu) }}
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endif %}
 
         {# ── Projet professionnel ── #}
         {% set diag = diagnostic.besoinsParDiagnostic[0].diagnostic if diagnostic.besoinsParDiagnostic else none %}
         {% if diag %}
-        <div class="col-12 col-md-6 mb-3 mb-md-4">
-            <div class="c-box h-100">
-                <h3>
-                    <i class="ri-compass-3-line fw-medium" aria-hidden="true"></i>
-                    Projet professionnel
-                </h3>
-                <ul class="list-data mb-0">
-                    <li>
-                        <small>Métier recherché</small>
-                        <strong>{{ diag.nomMetier or "Aucun métier défini" }}</strong>
-                    </li>
-                    {% if diag.typologie %}
-                    <li>
-                        <small>Typologie</small>
-                        <strong>{{ diag.typologie }}{% if diag.codeSousTypologie %} ({{ diag.codeSousTypologie }}){% endif %}</strong>
-                    </li>
-                    {% endif %}
-                </ul>
-                {{ render_agent(diag.agent, diag.dateMiseAJour) }}
+        <div class="c-box mb-3 mb-md-4">
+            <h3>
+                <i class="ri-compass-3-line fw-medium" aria-hidden="true"></i>
+                Projet professionnel
+            </h3>
+            {% if diag.nomMetier %}
+            {{ dot("success", diag.nomMetier) }}
+            {% else %}
+            {{ dot("warning", "Pas de projet professionnel défini") }}
+            {% endif %}
 
-                {# Offre raisonnable d'emploi #}
-                {% set ore = diagnostic.extra.offreRaisonnableEmploi if diagnostic.extra is defined else none %}
-                {% if ore %}
-                <hr class="my-3">
-                <h4 class="fs-sm fw-bold">Offre raisonnable d'emploi</h4>
-                <ul class="list-data mb-0">
-                    {% for key, label in [("experience", "Expérience"), ("typeContratSouhaite", "Contrat souhaité"), ("salaireMinimumAccepte", "Salaire minimum"), ("tempsTravailSouhaite", "Temps de travail"), ("trajetAllerAccepte", "Trajet aller"), ("lieuxDeTravail", "Lieux de travail")] %}
-                    {% if ore[key] %}
-                    <li>
-                        <small>{{ label }}</small>
-                        <strong>{{ ore[key] }}</strong>
-                    </li>
-                    {% endif %}
-                    {% endfor %}
-                </ul>
-                {% endif %}
-            </div>
+            {% set ore = ex.offreRaisonnableEmploi if ex.offreRaisonnableEmploi is defined else none %}
+            {% if ore %}
+            {% if ore.experience %}
+            {{ dot("secondary", "Expérience : " + ore.experience) }}
+            {% endif %}
+            {% if ore.typeContratSouhaite %}
+            {{ dot("secondary", "Contrat souhaité : " + ore.typeContratSouhaite) }}
+            {% endif %}
+            {% if ore.tempsTravailSouhaite %}
+            {{ dot("secondary", "Temps de travail : " + ore.tempsTravailSouhaite) }}
+            {% endif %}
+            {% if ore.lieuxDeTravail %}
+            {{ dot("secondary", "Lieux de travail : " + ore.lieuxDeTravail) }}
+            {% endif %}
+            {% endif %}
+
+            {{ agent_line(diag.agent, diag.dateMiseAJour) }}
         </div>
         {% endif %}
 
-        {# ── Points forts et besoins ── #}
-        {% set ns = namespace(has_besoins=false) %}
+        {# ── Contraintes et besoins ── #}
+        {% set tc = diagnostic.thematiqueContrainte %}
+        {% set ns_besoins = namespace(items=[]) %}
+        {% set ns_contraintes = namespace(items=[]) %}
         {% for bp in diagnostic.besoinsParDiagnostic or [] %}
             {% for th in bp.thematiquesBesoins or [] %}
-                {% if th.besoins and th.besoins | selectattr("valeur", "ne", "NON_EXPLORE") | list %}
-                    {% set ns.has_besoins = true %}
+                {% for b_item in th.besoins or [] %}
+                    {% if b_item.valeur == "BESOIN" %}
+                        {% set ns_besoins.items = ns_besoins.items + [(th.libelle, b_item.libelle)] %}
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        {% endfor %}
+        {% if tc %}
+            {% for c in tc.contraintes or [] %}
+                {% if c.valeur and c.valeur != "NON_ABORDEE" and c.valeur != "NON_ABORDE" %}
+                    {% set ns_contraintes.items = ns_contraintes.items + [(c.libelle, c.estPrioritaire)] %}
                 {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        {% if ns_contraintes.items or ns_besoins.items %}
+        <div class="c-box mb-3 mb-md-4">
+            <h3>
+                <i class="ri-alert-line fw-medium" aria-hidden="true"></i>
+                Contraintes et besoins
+            </h3>
+
+            {% for libelle, est_prio in ns_contraintes.items %}
+            {% if est_prio %}
+            {{ dot("danger", libelle + " (prioritaire)") }}
+            {% else %}
+            {{ dot("warning", libelle) }}
+            {% endif %}
+            {% endfor %}
+
+            {% if ns_contraintes.items and ns_besoins.items %}
+            <hr class="my-2">
+            {% endif %}
+
+            {% for theme, besoin in ns_besoins.items %}
+            {{ dot("info", besoin) }}
+            {% endfor %}
+
+            {% if tc %}
+            {% if tc.declareSansContrainte and tc.declareSansContrainte.flag %}
+            {{ dot("success", "Aucune contrainte personnelle déclarée") }}
+            {% endif %}
+            {{ agent_line(tc.agent, tc.dateExploration) }}
+            {% endif %}
+        </div>
+        {% elif tc and tc.declareSansContrainte and tc.declareSansContrainte.flag %}
+        <div class="c-box mb-3 mb-md-4">
+            <h3>
+                <i class="ri-alert-line fw-medium" aria-hidden="true"></i>
+                Contraintes et besoins
+            </h3>
+            {{ dot("success", "Aucune contrainte personnelle déclarée") }}
+            {{ dot("success", "Aucun besoin identifié") }}
+        </div>
+        {% endif %}
+
+        {# ── Points forts ── #}
+        {% set ns_forces = namespace(items=[]) %}
+        {% for bp in diagnostic.besoinsParDiagnostic or [] %}
+            {% for th in bp.thematiquesBesoins or [] %}
+                {% for b_item in th.besoins or [] %}
+                    {% if b_item.valeur == "POINT_FORT" %}
+                        {% set ns_forces.items = ns_forces.items + [b_item.libelle] %}
+                    {% endif %}
+                {% endfor %}
             {% endfor %}
         {% endfor %}
 
-        {% if ns.has_besoins %}
-        <div class="col-12 col-md-6 mb-3 mb-md-4">
-            <div class="c-box h-100">
-                <h3>
-                    <i class="ri-star-line fw-medium" aria-hidden="true"></i>
-                    Points forts et besoins
-                </h3>
-                {% for bp in diagnostic.besoinsParDiagnostic or [] %}
-                    {% for th in bp.thematiquesBesoins or [] %}
-                        {% set explored = th.besoins | selectattr("valeur", "ne", "NON_EXPLORE") | list if th.besoins else [] %}
-                        {% if explored %}
-                        <h4 class="fs-sm fw-bold mt-3">{{ th.libelle }}</h4>
-                        <ul class="list-data mb-0">
-                            {% for b in th.besoins | sort(attribute="valeur") %}
-                            {% if b.valeur != "NON_EXPLORE" %}
-                            <li>
-                                <small>{{ b.libelle }}</small>
-                                {{ render_value(b.valeur) }}
-                            </li>
-                            {% endif %}
-                            {% endfor %}
-                        </ul>
-                        {% endif %}
-                    {% endfor %}
-                {% endfor %}
-            </div>
+        {% if ns_forces.items %}
+        <div class="c-box mb-3 mb-md-4">
+            <h3>
+                <i class="ri-star-line fw-medium" aria-hidden="true"></i>
+                Points forts
+            </h3>
+            {% for force in ns_forces.items %}
+            {{ dot("success", force) }}
+            {% endfor %}
         </div>
         {% endif %}
 
-        {# ── Contraintes personnelles ── #}
-        {% set tc = diagnostic.thematiqueContrainte %}
-        {% set identified_contraintes = [] %}
-        {% if tc and tc.contraintes %}
-            {% set identified_contraintes = tc.contraintes | selectattr("valeur", "ne", "NON_ABORDEE") | list %}
-        {% endif %}
-        {% set has_sans_contrainte = tc.declareSansContrainte.flag if tc and tc.declareSansContrainte else false %}
+        {# ── Autonomie et numérique ── #}
+        {% set pa = diagnostic.pouvoirAgir if diagnostic.pouvoirAgir is defined else none %}
+        {% set an = diagnostic.autonomieNumerique if diagnostic.autonomieNumerique is defined else none %}
 
-        {% if identified_contraintes or has_sans_contrainte %}
-        <div class="col-12 col-md-6 mb-3 mb-md-4">
-            <div class="c-box h-100">
-                <h3>
-                    <i class="ri-alert-line fw-medium" aria-hidden="true"></i>
-                    Contraintes personnelles
-                </h3>
-                {% if has_sans_contrainte %}
-                <p class="text-muted fs-sm">
-                    Déclaré sans contrainte personnelle
-                    {% if tc.declareSansContrainte.date %} le {{ tc.declareSansContrainte.date[:10] }}{% endif %}
-                </p>
+        {% if pa or an %}
+        <div class="c-box mb-3 mb-md-4">
+            <h3>
+                <i class="ri-computer-line fw-medium" aria-hidden="true"></i>
+                Autonomie et numérique
+            </h3>
+
+            {% if pa %}
+            {% if pa.confiance == "OUI" and pa.accompagnement != "OUI" %}
+            {{ dot("success", "Autonome dans ses démarches") }}
+            {% elif pa.confiance == "OUI" and pa.accompagnement == "OUI" %}
+            {{ dot("warning", "Confiant·e, mais demande un accompagnement") }}
+            {% elif pa.confiance %}
+            {{ dot("warning", "Besoin d'accompagnement dans ses démarches") }}
+            {% endif %}
+            {% if pa.resultatAnalyse %}
+            <p class="fs-sm text-muted mt-1 mb-2 ms-3">{{ pa.resultatAnalyse }}</p>
+            {% endif %}
+            {{ agent_line(pa.agent, pa.dateExploration) }}
+            {% endif %}
+
+            {% if pa and an %}
+            <hr class="my-2">
+            {% endif %}
+
+            {% if an %}
+            {% if an.contrainte and an.contrainte.valeur and an.contrainte.valeur not in ("NON_ABORDEE", "NON_ABORDE") %}
+                {% if an.contrainte.valeur == "OUI" %}
+                {{ dot("warning", "Difficulté d'accès au numérique") }}
+                {% else %}
+                {{ dot("success", "À l'aise avec les outils numériques") }}
                 {% endif %}
-                {% for c in identified_contraintes %}
-                <div class="{% if not loop.first %}mt-3 pt-3 border-top{% endif %}">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <strong class="fs-sm">{{ c.libelle }}</strong>
-                        {% if c.estPrioritaire %}
-                        <span class="text-danger fw-bold fs-sm">Prioritaire</span>
-                        {% endif %}
-                        {% if c.impact and c.impact != "NON_RENSEIGNE" %}
-                        {{ render_value(c.impact) }}
-                        {% endif %}
-                    </div>
-                    {% if c.situations %}
-                    <div class="fs-xs text-muted fw-bold mt-2 mb-1">Situation</div>
-                    <ul class="list-data mb-0">
-                        {% for s in c.situations %}
-                        <li>
-                            <small>{{ s.libelle }}</small>
-                            {{ render_value(s.valeur) }}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% endif %}
-                    {% if c.objectifs %}
-                    <div class="fs-xs text-muted fw-bold mt-2 mb-1">Objectifs</div>
-                    <ul class="list-data mb-0">
-                        {% for o in c.objectifs %}
-                        <li>
-                            <small>{{ o.libelle }}</small>
-                            {{ render_value(o.valeur) }}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% endif %}
-                </div>
-                {% endfor %}
-                {{ render_agent(tc.agent, tc.dateExploration) }}
-            </div>
+            {% endif %}
+            {% if an.besoin %}
+                {% if an.besoin.valeur == "BESOIN" %}
+                {{ dot("warning", "Besoin d'accompagnement numérique") }}
+                {% elif an.besoin.valeur == "POINT_FORT" %}
+                {{ dot("success", "Maîtrise des services numériques") }}
+                {% endif %}
+            {% endif %}
+            {{ agent_line(an.agent, an.dateExploration) }}
+            {% endif %}
         </div>
         {% endif %}
 
-        {# ── Confiance et capacité à agir ── #}
-        {% set pa = diagnostic.pouvoirAgir %}
-        {% if pa and (pa.confiance or pa.accompagnement) %}
-        <div class="col-12 col-md-6 mb-3 mb-md-4">
-            <div class="c-box h-100">
-                <h3>
-                    <i class="ri-empathize-line fw-medium" aria-hidden="true"></i>
-                    Confiance et capacité à agir
-                </h3>
-                <ul class="list-data mb-0">
-                    {% if pa.confiance %}
-                    <li>
-                        <small>Confiant(e) pour mener ses démarches ?</small>
-                        {{ render_value(pa.confiance) }}
-                    </li>
-                    {% endif %}
-                    {% if pa.accompagnement %}
-                    <li>
-                        <small>Besoin d'accompagnement ?</small>
-                        {{ render_value(pa.accompagnement) }}
-                    </li>
-                    {% endif %}
-                </ul>
-                {% if pa.resultatAnalyse %}
-                <div class="mt-2 p-2 bg-light rounded fs-sm">
-                    <strong>Analyse :</strong> {{ pa.resultatAnalyse }}
-                </div>
-                {% endif %}
-                {{ render_agent(pa.agent, pa.dateExploration) }}
-            </div>
-        </div>
-        {% endif %}
-
-        {# ── Maîtrise du numérique ── #}
-        {% set an = diagnostic.autonomieNumerique %}
-        {% if an and (an.contrainte or an.besoin) %}
-        <div class="col-12 col-md-6 mb-3 mb-md-4">
-            <div class="c-box h-100">
-                <h3>
-                    <i class="ri-computer-line fw-medium" aria-hidden="true"></i>
-                    Maîtrise du numérique
-                </h3>
-                {% if an.contrainte %}
-                <ul class="list-data mb-0">
-                    <li>
-                        <small>{{ an.contrainte.libelle }}</small>
-                        {{ render_value(an.contrainte.valeur) }}
-                    </li>
-                </ul>
-                {% if an.contrainte.situations %}
-                <div class="fs-xs text-muted fw-bold mt-2 mb-1">Situation</div>
-                <ul class="list-data mb-0">
-                    {% for s in an.contrainte.situations %}
-                    <li>
-                        <small>{{ s.libelle }}</small>
-                        {{ render_value(s.valeur) }}
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
-                {% if an.contrainte.objectifs %}
-                <div class="fs-xs text-muted fw-bold mt-2 mb-1">Objectifs</div>
-                <ul class="list-data mb-0">
-                    {% for o in an.contrainte.objectifs %}
-                    <li>
-                        <small>{{ o.libelle }}</small>
-                        {{ render_value(o.valeur) }}
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
-                {% endif %}
-                {% if an.besoin %}
-                <ul class="list-data mb-0 mt-2">
-                    <li>
-                        <small>{{ an.besoin.libelle }}</small>
-                        {{ render_value(an.besoin.valeur) }}
-                    </li>
-                </ul>
-                {% endif %}
-                {{ render_agent(an.agent, an.dateExploration) }}
-            </div>
-        </div>
-        {% endif %}
-
-        {# ── Modalité de suivi ── #}
-        {% set ms = diagnostic.extra.modaliteSuivi if diagnostic.extra is defined else none %}
-        {% if ms and ms.modaliteEnCours %}
-        <div class="col-12 col-md-6 mb-3 mb-md-4">
-            <div class="c-box h-100">
-                <h3>
-                    <i class="ri-user-settings-line fw-medium" aria-hidden="true"></i>
-                    Modalité de suivi
-                </h3>
-                <ul class="list-data mb-0">
-                    <li>
-                        <small>Modalité en cours</small>
-                        <strong>{{ ms.modaliteEnCours }}</strong>
-                    </li>
-                    {% if ms.dateEnregistrement %}
-                    <li>
-                        <small>Depuis le</small>
-                        <strong>{{ ms.dateEnregistrement[:10] }}</strong>
-                    </li>
-                    {% endif %}
-                    {% if ms.accompagnementDematerialise is not none %}
-                    <li>
-                        <small>Accompagnement dématérialisé</small>
-                        <strong>{{ "Oui" if ms.accompagnementDematerialise else "Non" }}</strong>
-                    </li>
-                    {% endif %}
-                </ul>
-                {{ render_agent(ms.agent, ms.dateEnregistrement) }}
-            </div>
-        </div>
-        {% endif %}
-
-        </div>{# end .row #}
         {% endif %}{# end if diagnostic #}
     </div>
 </div>
