@@ -54,6 +54,7 @@ async def detail_beneficiary(request: Request, id: int):
         b = session.get(Beneficiary, id)
         if not b:
             return HTMLResponse("Not found", status_code=404)
+        b._eligibility_list = json.loads(b.eligibilites) if b.eligibilites else []
         structure = None
         if b.structure_referente_id:
             structure = session.get(Structure, b.structure_referente_id)

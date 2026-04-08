@@ -158,20 +158,50 @@
                                 <p class="fs-sm mb-2">{{ best.description[:150] }}{% if best.description|length > 150 %}...{% endif %}</p>
                                 {% endif %}
 
-                                {# Why this is recommended — links to diagnostic signals #}
+                                {# Compatibilité diagnostic #}
                                 {% if ns_diag_besoins.items or ns_diag_contraintes.items %}
-                                <div class="mb-0">
-                                    <p class="fs-sm fw-bold mb-1">Pourquoi cette recommandation</p>
-                                    <div class="d-flex flex-wrap gap-1">
+                                <div class="mb-2">
+                                    <p class="fs-sm fw-bold mb-1">Compatibilité avec le diagnostic</p>
+                                    <div class="d-flex flex-wrap gap-1" style="margin-left: -3px;">
                                         {% for besoin in ns_diag_besoins.items[:3] %}
                                         <span class="badge rounded-pill badge-xs bg-success-lighter text-success">{{ besoin }}</span>
                                         {% endfor %}
                                         {% for libelle, est_prio in ns_diag_contraintes.items[:2] %}
-                                        <span class="badge rounded-pill badge-xs {% if est_prio %}bg-danger-lighter text-danger{% else %}bg-warning-lighter text-warning{% endif %}">{{ libelle }}</span>
+                                        <span class="badge rounded-pill badge-xs {% if est_prio %}bg-danger-lighter text-danger{% else %}bg-info-lighter text-info{% endif %}">{{ libelle }}</span>
                                         {% endfor %}
                                     </div>
                                 </div>
                                 {% endif %}
+
+                                {# Éligibilité #}
+                                <div class="mb-0">
+                                    <p class="fs-sm fw-bold mb-1">Éligibilité à la solution</p>
+                                    {% set iae_types = ["aci", "ei", "etti", "ai"] %}
+                                    <div class="d-flex flex-wrap gap-1" style="margin-left: -3px;">
+                                        {% if best.solution_type in iae_types %}
+                                            {% set has_pass = "PASS IAE valide" in (b.eligibilites or "") %}
+                                            {% if has_pass %}
+                                            <span class="badge rounded-pill badge-xs bg-success-lighter text-success">PASS IAE valide</span>
+                                            {% else %}
+                                            <span class="badge rounded-pill badge-xs bg-info-lighter text-info">Éligibilité IAE à valider</span>
+                                            {% endif %}
+                                        {% else %}
+                                            {% set elig_badges = [] %}
+                                            {% for e in (b._eligibility_list if b._eligibility_list is defined else []) %}
+                                                {% if best.type_label in e %}
+                                                    {% set _ = elig_badges.append(e) %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            {% if elig_badges %}
+                                                {% for e in elig_badges %}
+                                                <span class="badge rounded-pill badge-xs bg-success-lighter text-success">{{ e }}</span>
+                                                {% endfor %}
+                                            {% else %}
+                                            <span class="badge rounded-pill badge-xs bg-info-lighter text-info">Éligibilité à valider</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="border-top px-3 px-lg-4 py-3 d-flex justify-content-end gap-2">
