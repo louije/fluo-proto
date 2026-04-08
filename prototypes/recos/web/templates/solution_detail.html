@@ -139,7 +139,7 @@
                     <h2 class="h5 mb-3">Disponibilité</h2>
                     {% if solution.places_disponibles > 0 %}
                     <p class="mb-0">
-                        <span class="badge rounded-pill badge-base bg-success">{{ solution.places_disponibles }} places disponibles</span>
+                        <span class="badge rounded-pill badge-base bg-success">{{ solution.places_disponibles }} place{{ "s" if solution.places_disponibles > 1 else "" }} disponible{{ "s" if solution.places_disponibles > 1 else "" }}</span>
                     </p>
                     {% else %}
                     <p class="mb-0">

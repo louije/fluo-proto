@@ -141,7 +141,7 @@
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h3 class="h6 mb-0">{{ best.structure_name or best.name }}</h3>
                                     {% if best.places_disponibles > 0 %}
-                                    <span class="badge rounded-pill badge-sm bg-success-lighter text-success flex-shrink-0">{{ best.places_disponibles }} places</span>
+                                    <span class="badge rounded-pill badge-sm bg-success-lighter text-success flex-shrink-0">{{ best.places_disponibles }} place{{ "s" if best.places_disponibles > 1 else "" }}</span>
                                     {% else %}
                                     <span class="badge rounded-pill badge-sm bg-danger-lighter text-danger flex-shrink-0">Saturé</span>
                                     {% endif %}
@@ -366,7 +366,7 @@
                                             <td>{{ s.commune or "—" }}</td>
                                             <td>
                                                 {% if s.places_disponibles > 0 %}
-                                                <span class="badge rounded-pill badge-sm bg-success-lighter text-success">{{ s.places_disponibles }} places</span>
+                                                <span class="badge rounded-pill badge-sm bg-success-lighter text-success">{{ s.places_disponibles }} place{{ "s" if s.places_disponibles > 1 else "" }}</span>
                                                 {% else %}
                                                 <span class="badge rounded-pill badge-sm bg-danger-lighter text-danger">Saturé</span>
                                                 {% endif %}
