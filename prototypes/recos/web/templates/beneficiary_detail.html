@@ -49,8 +49,8 @@
                         <a class="nav-link" id="solutions-tab" data-bs-toggle="tab" href="#solutions"
                            role="tab" aria-controls="solutions" aria-selected="false">
                             Solutions recommandées
-                            {% if results.recommended %}
-                            <span class="badge rounded-pill badge-xs bg-info text-white ms-1">{{ results.recommended|length }}</span>
+                            {% if results.by_type %}
+                            <span class="badge rounded-pill badge-xs bg-info text-white ms-1">{{ results.by_type|length }}</span>
                             {% endif %}
                         </a>
                     </li>
