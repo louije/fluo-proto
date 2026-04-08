@@ -45,9 +45,7 @@
                 Parcours
             </h3>
 
-            {# Modalité #}
             {% if ms and ms.modaliteEnCours %}
-            <h4>Modalité</h4>
             {{ dot("info", "Modalité " + ms.modaliteEnCours + " depuis le " + ms.dateEnregistrement[:10]) }}
             {% endif %}
 
