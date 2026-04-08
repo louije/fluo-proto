@@ -96,17 +96,17 @@
         transform: none !important;
         transition: transform 0s linear !important;
         background-color: #f8f8f8;
-        width: 280px;
+        width: 240px !important;
     }
 
     .l-authenticated > .s-main .container {
         --bs-gutter-x: 3rem;
-        margin-left: 280px;
-        max-width: calc(100% - 280px);
+        margin-left: 240px;
+        max-width: calc(100% - 240px);
     }
 
     .l-authenticated .global-messages-container {
-        margin-left: 280px;
+        margin-left: 240px;
     }
 
     .l-authenticated > .s-main .s-title-02 {
@@ -130,25 +130,25 @@
 /* Override the theme's 320px/380px values at larger breakpoints. */
 @media (min-width: 1280px) {
     .l-authenticated #offcanvasNav {
-        width: 280px;
+        width: 240px !important;
     }
 
     .l-authenticated > .s-main .container {
-        margin-left: 280px;
-        max-width: calc(100% - 280px);
+        margin-left: 240px;
+        max-width: calc(100% - 240px);
     }
 
     .l-authenticated .global-messages-container {
-        margin-left: 280px;
+        margin-left: 240px;
     }
 }
 
 @media (min-width: 1640px) {
     .l-authenticated #offcanvasNav {
-        width: 280px;
+        width: 240px !important;
     }
 
     .l-authenticated .global-messages-container {
-        margin-left: 280px;
+        margin-left: 240px;
     }
 }
